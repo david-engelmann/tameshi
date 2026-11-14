@@ -20,7 +20,7 @@ fn test_seed_files_present() {
     let gitignore = read(".gitignore");
     assert!(readme.contains("# tameshi"));
     assert!(readme.contains("The evidence pack tool for checks"));
-    assert!(readme.contains("Closed rounds stand at 4 of 100"));
+    assert!(readme.contains("Closed rounds stand at 5 of 100"));
     assert!(readme.contains("## Licence"));
     assert!(licence.contains("MIT License"));
     assert!(gitignore.contains("__pycache__/"));
