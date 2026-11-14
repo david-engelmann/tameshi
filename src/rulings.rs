@@ -530,3 +530,187 @@ pub fn generate_ruling(
     let body = render_body(pack, &record);
     Ok((record, body))
 }
+
+const RULING_DISAGREEMENT: &str = "the ruling record disagrees with the pack it was ruled from";
+
+fn ruling_disagreement() -> TameshiError {
+    TameshiError::pack_validation(RULING_DISAGREEMENT)
+}
+
+/// Check a ruling record's signature block stands in a shape
+/// the validation honours. The generator emits unsigned
+/// records only and a human signs outside the tool, so the
+/// signer and the signing time are the human's own values and
+/// are compared in neither direction, and the block is read
+/// for its shape and its consistency alone.
+fn validate_signature_block(record: &JsonValue) -> Result<()> {
+    let signature = match record.get("signature") {
+        Some(value) => value,
+        None => return Err(ruling_disagreement()),
+    };
+    let pairs = match signature.as_object() {
+        Some(pairs) if pairs.len() == 3 => pairs,
+        _ => return Err(ruling_disagreement()),
+    };
+    let mut status: Option<&str> = None;
+    let mut signed_by: Option<&JsonValue> = None;
+    let mut signed_at: Option<&JsonValue> = None;
+    for (key, value) in pairs {
+        match key.as_str() {
+            "status" => status = value.as_text(),
+            "signed_by" => signed_by = Some(value),
+            "signed_at" => signed_at = Some(value),
+            _ => return Err(ruling_disagreement()),
+        }
+    }
+    let nonempty_text = |value: Option<&JsonValue>| -> bool {
+        matches!(value, Some(JsonValue::Text(text)) if !text.is_empty())
+    };
+    match status {
+        Some("unsigned") => {
+            if signed_by != Some(&JsonValue::Null) || signed_at != Some(&JsonValue::Null) {
+                return Err(ruling_disagreement());
+            }
+        }
+        Some("signed") => {
+            if !nonempty_text(signed_by) || !nonempty_text(signed_at) {
+                return Err(ruling_disagreement());
+            }
+        }
+        _ => return Err(ruling_disagreement()),
+    }
+    Ok(())
+}
+
+/// The verdict and state pairs the generator writes, read
+/// back as the consistency a supplied record must stand in.
+fn verdict_state(verdict: &str) -> Option<&'static str> {
+    match verdict {
+        "keep" => Some("required"),
+        "demote-to-advisory" => Some("advisory"),
+        "quarantine" => Some("quarantined"),
+        "kill" => Some("removed"),
+        _ => None,
+    }
+}
+
+/// Validate a ruling record against the pack it was ruled
+/// from. The record is checked for the standing the generator
+/// gives it, field by field against the pack it cites. Its
+/// repository and check stand as the pack's, its floor stands
+/// as the pack's floor copied whole and that floor must be
+/// the accounting the pack's own evidence recomputes and
+/// must meet the floor, its verdict and state stand as a
+/// pair the generator writes, its expiry stands only on a
+/// quarantine and there as a calendar date, a kill verdict
+/// stands only where the pack recommends kill, and its
+/// recommendation citation stands as the pack's record
+/// exactly where the pack carries one and nowhere else. The
+/// ruling word and the expiry are the record's own carriers,
+/// so the validation proves the record is a ruling the
+/// generator could have issued from this pack under the
+/// word and the expiry it carries, and no more than that.
+pub fn validate_ruling(record: &JsonValue, pack: &JsonValue) -> Result<bool> {
+    if !record.is_object()
+        || record.get("format").and_then(|item| item.as_text()) != Some(RULING_FORMAT)
+    {
+        return Err(ruling_disagreement());
+    }
+    validate_pack(pack)?;
+    let recommendation = pack.get("recommendation");
+    let expected_fields: &[&str] = if recommendation.is_some() {
+        &[
+            "format",
+            "repo",
+            "check",
+            "ruling",
+            "state_after_ruling",
+            "expiry",
+            "floor",
+            "recommendation",
+            "signature",
+        ]
+    } else {
+        &[
+            "format",
+            "repo",
+            "check",
+            "ruling",
+            "state_after_ruling",
+            "expiry",
+            "floor",
+            "signature",
+        ]
+    };
+    let fields: Vec<&str> = record
+        .as_object()
+        .expect("the record stands as an object")
+        .iter()
+        .map(|(name, _)| name.as_str())
+        .collect();
+    if fields.len() != expected_fields.len()
+        || !expected_fields.iter().all(|name| fields.contains(name))
+    {
+        return Err(ruling_disagreement());
+    }
+    if record.get("repo") != pack.get("repo") || record.get("check") != pack.get("check") {
+        return Err(ruling_disagreement());
+    }
+    if record.get("floor") != pack.get("floor") {
+        return Err(ruling_disagreement());
+    }
+    let recomputed = packs::recompute_floor(pack)?;
+    if pack.get("floor").unwrap_or(&JsonValue::Null) != &recomputed
+        || !matches!(recomputed.get("meets_floor"), Some(JsonValue::Bool(true)))
+    {
+        return Err(ruling_disagreement());
+    }
+    let verdict = record
+        .get("ruling")
+        .and_then(|item| item.as_text())
+        .unwrap_or("");
+    let state = match verdict_state(verdict) {
+        Some(state) => state,
+        None => return Err(ruling_disagreement()),
+    };
+    if record
+        .get("state_after_ruling")
+        .and_then(|item| item.as_text())
+        != Some(state)
+    {
+        return Err(ruling_disagreement());
+    }
+    match verdict {
+        "quarantine" => {
+            let expiry = match record.get("expiry") {
+                Some(value) => value,
+                None => return Err(ruling_disagreement()),
+            };
+            calendar_date(expiry, "expiry")?;
+        }
+        "kill" => {
+            let recommended = recommendation
+                .and_then(|held| held.get("recommendation"))
+                .and_then(|word| word.as_text())
+                == Some("kill");
+            if !recommended {
+                return Err(ruling_disagreement());
+            }
+            if !matches!(record.get("expiry"), Some(JsonValue::Null)) {
+                return Err(ruling_disagreement());
+            }
+        }
+        _ => {
+            if !matches!(record.get("expiry"), Some(JsonValue::Null)) {
+                return Err(ruling_disagreement());
+            }
+        }
+    }
+    if let Some(held) = recommendation {
+        if record.get("recommendation") != Some(held) {
+            return Err(ruling_disagreement());
+        }
+    }
+    validate_signature_block(record)?;
+    Ok(true)
+}

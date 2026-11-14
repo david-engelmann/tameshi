@@ -2,7 +2,8 @@
 //!
 //! This shell is the closing slice of the port under obligations
 //! PORT3-1 to PORT3-3. It carries the three doors of the Python
-//! command line, assemble and rule and validate, with the argument
+//! command line, assemble and rule and validate, and the
+//! validate-ruling door slice 4 adds, with the argument
 //! reading the contract probe recorded. A reading the argument
 //! reader refuses exits with code 2 and the short usage line of the
 //! door on standard error, and a refusal of the reader or the
@@ -29,9 +30,9 @@ use tameshi::render;
 use tameshi::rulings;
 use tameshi::TameshiError;
 
-const TOP_USAGE: &str = "usage: tameshi [-h] {assemble,rule,validate} ...";
+const TOP_USAGE: &str = "usage: tameshi [-h] {assemble,rule,validate,validate-ruling} ...";
 
-const TOP_HELP: &str = "usage: tameshi [-h] {assemble,rule,validate} ...
+const TOP_HELP: &str = "usage: tameshi [-h] {assemble,rule,validate,validate-ruling} ...
 
 tameshi, the evidence pack tool for checks.
 
@@ -39,12 +40,14 @@ commands:
   assemble  assemble one evidence pack per check from local evidence files
   rule      generate a ruling record and pull request body from an evidence pack
   validate  validate an evidence pack against the pack rebuilt from its inputs
+  validate-ruling  validate a ruling record against the pack it was ruled from
 ";
 
 const ASSEMBLE_USAGE: &str = "usage: tameshi assemble --catchledger PATH [--canaryfield PATH] [--blindgate PATH] [--decision PATH] --packs-dir DIR";
 const RULE_USAGE: &str =
     "usage: tameshi rule --pack PATH --ruling WORD [--expires DATE] [--today DATE] --out DIR";
 const VALIDATE_USAGE: &str = "usage: tameshi validate --pack PATH --catchledger PATH [--canaryfield PATH] [--blindgate PATH] [--decision PATH]";
+const VALIDATE_RULING_USAGE: &str = "usage: tameshi validate-ruling --pack PATH --ruling PATH";
 
 const ASSEMBLE_HELP: &str = "usage: tameshi assemble --catchledger PATH [--canaryfield PATH] [--blindgate PATH] [--decision PATH] --packs-dir DIR
 
@@ -59,6 +62,10 @@ const VALIDATE_HELP: &str =
     "usage: tameshi validate --pack PATH --catchledger PATH [--canaryfield PATH] [--blindgate PATH] [--decision PATH]
 
 validate an evidence pack against the pack rebuilt from its inputs
+";
+const VALIDATE_RULING_HELP: &str = "usage: tameshi validate-ruling --pack PATH --ruling PATH
+
+validate a ruling record against the pack it was ruled from
 ";
 
 struct FlagSpec {
@@ -132,6 +139,17 @@ const VALIDATE_FLAGS: &[FlagSpec] = &[
     FlagSpec {
         name: "decision",
         required: false,
+    },
+];
+
+const VALIDATE_RULING_FLAGS: &[FlagSpec] = &[
+    FlagSpec {
+        name: "pack",
+        required: true,
+    },
+    FlagSpec {
+        name: "ruling",
+        required: true,
     },
 ];
 
@@ -551,6 +569,13 @@ fn door_validate(values: &Values) -> Result<(), TameshiError> {
     Ok(())
 }
 
+fn door_validate_ruling(values: &Values) -> Result<(), TameshiError> {
+    let pack = reader::read_json_file(&path_of(values, "pack"), "evidence pack")?;
+    let record = reader::read_json_file(&path_of(values, "ruling"), "ruling record")?;
+    rulings::validate_ruling(&record, &pack)?;
+    Ok(())
+}
+
 fn print_stdout(text: &str) {
     let stdout = std::io::stdout();
     let mut handle = stdout.lock();
@@ -635,6 +660,16 @@ fn run(args: &[OsString]) -> u8 {
                 RULE_HELP,
                 poisoned,
                 door_rule,
+            );
+        }
+        if tok == b"validate-ruling" {
+            return run_door(
+                VALIDATE_RULING_FLAGS,
+                &args[position + 1..],
+                VALIDATE_RULING_USAGE,
+                VALIDATE_RULING_HELP,
+                poisoned,
+                door_validate_ruling,
             );
         }
         if tok == b"validate" {
