@@ -41,12 +41,12 @@ commands:
   validate  validate an evidence pack against the pack rebuilt from its inputs
 ";
 
-const ASSEMBLE_USAGE: &str = "usage: tameshi assemble --catchledger PATH [--canaryfield PATH] [--blindgate PATH] --packs-dir DIR";
+const ASSEMBLE_USAGE: &str = "usage: tameshi assemble --catchledger PATH [--canaryfield PATH] [--blindgate PATH] [--decision PATH] --packs-dir DIR";
 const RULE_USAGE: &str =
     "usage: tameshi rule --pack PATH --ruling WORD [--expires DATE] [--today DATE] --out DIR";
-const VALIDATE_USAGE: &str = "usage: tameshi validate --pack PATH --catchledger PATH [--canaryfield PATH] [--blindgate PATH]";
+const VALIDATE_USAGE: &str = "usage: tameshi validate --pack PATH --catchledger PATH [--canaryfield PATH] [--blindgate PATH] [--decision PATH]";
 
-const ASSEMBLE_HELP: &str = "usage: tameshi assemble --catchledger PATH [--canaryfield PATH] [--blindgate PATH] --packs-dir DIR
+const ASSEMBLE_HELP: &str = "usage: tameshi assemble --catchledger PATH [--canaryfield PATH] [--blindgate PATH] [--decision PATH] --packs-dir DIR
 
 assemble one evidence pack per check from local evidence files
 ";
@@ -56,7 +56,7 @@ const RULE_HELP: &str =
 generate a ruling record and pull request body from an evidence pack
 ";
 const VALIDATE_HELP: &str =
-    "usage: tameshi validate --pack PATH --catchledger PATH [--canaryfield PATH] [--blindgate PATH]
+    "usage: tameshi validate --pack PATH --catchledger PATH [--canaryfield PATH] [--blindgate PATH] [--decision PATH]
 
 validate an evidence pack against the pack rebuilt from its inputs
 ";
@@ -77,6 +77,10 @@ const ASSEMBLE_FLAGS: &[FlagSpec] = &[
     },
     FlagSpec {
         name: "blindgate",
+        required: false,
+    },
+    FlagSpec {
+        name: "decision",
         required: false,
     },
     FlagSpec {
@@ -123,6 +127,10 @@ const VALIDATE_FLAGS: &[FlagSpec] = &[
     },
     FlagSpec {
         name: "blindgate",
+        required: false,
+    },
+    FlagSpec {
+        name: "decision",
         required: false,
     },
 ];
@@ -410,8 +418,7 @@ fn escape_word(bytes: &[u8]) -> String {
 /// rulings module. A ruling word whose bytes are not UTF-8 reaches
 /// this refusal only past a pack that validates, which the probe
 /// below establishes.
-const KILL_REFUSAL: &str =
-    "kill is outside the ruling set in this slice and waits for its own later rule";
+const KILL_REFUSAL: &str = "a kill ruling requires a decision record recommending kill in the pack";
 
 /// Refuse a ruling word whose bytes are not UTF-8. The library
 /// reaches its ruling word only once it has validated the pack,
@@ -450,6 +457,19 @@ fn write_text(path: &std::path::Path, text: &str) -> Result<(), TameshiError> {
 /// Read the two optional evidence documents both reading doors
 /// take, the canaryfield results and the blindness evidence, under
 /// the labels the command line gives them.
+/// Read the decision document a run carries where the
+/// decision flag stands, validating it under DC-1 before
+/// any pack is written or compared.
+fn read_decision_document(values: &Values) -> Result<Option<(String, JsonValue)>, TameshiError> {
+    match values.get("decision") {
+        Some(path) => {
+            let document = reader::read_json_file(&PathBuf::from(path), "decision document")?;
+            Ok(Some(packs::read_decision(&document)?))
+        }
+        None => Ok(None),
+    }
+}
+
 fn read_optional_documents(
     values: &Values,
 ) -> Result<(Option<JsonValue>, Option<JsonValue>), TameshiError> {
@@ -474,7 +494,13 @@ fn door_assemble(values: &Values) -> Result<(), TameshiError> {
     let document = reader::read_json_file(&path_of(values, "catchledger"), "catchledger evidence")?;
     let cl_packs = ingest::read_catchledger_packs(&document)?;
     let (canary, blindness) = read_optional_documents(values)?;
-    let packs = packs::assemble_packs(&cl_packs, canary.as_ref(), blindness.as_ref())?;
+    let decision = read_decision_document(values)?;
+    let packs = packs::assemble_packs(
+        &cl_packs,
+        canary.as_ref(),
+        blindness.as_ref(),
+        decision.as_ref(),
+    )?;
     let packs_dir = path_of(values, "packs-dir");
     for (filename, pack) in &packs {
         write_text(&packs_dir.join(filename), &render::render_json(pack))?;
@@ -514,7 +540,14 @@ fn door_validate(values: &Values) -> Result<(), TameshiError> {
     let document = reader::read_json_file(&path_of(values, "catchledger"), "catchledger evidence")?;
     let cl_packs = ingest::read_catchledger_packs(&document)?;
     let (canary, blindness) = read_optional_documents(values)?;
-    packs::validate_pack(&pack, &cl_packs, canary.as_ref(), blindness.as_ref())?;
+    let decision = read_decision_document(values)?;
+    packs::validate_pack(
+        &pack,
+        &cl_packs,
+        canary.as_ref(),
+        blindness.as_ref(),
+        decision.as_ref(),
+    )?;
     Ok(())
 }
 

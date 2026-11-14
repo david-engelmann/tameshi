@@ -116,7 +116,7 @@ fn pack_cases_match_the_python_record() {
             .to_vec();
         let canary = optional_document(case, "canary_document");
         let blindness = optional_document(case, "blindness_document");
-        let outcome = packs::assemble_packs(&cl_packs, canary.as_ref(), blindness.as_ref());
+        let outcome = packs::assemble_packs(&cl_packs, canary.as_ref(), blindness.as_ref(), None);
         match outcome {
             Ok(assembled) => {
                 check_error(case, Ok(()));
@@ -188,7 +188,8 @@ fn validation_cases_match_the_python_record() {
         let canary = optional_document(case, "canary_document");
         let blindness = optional_document(case, "blindness_document");
         let outcome =
-            packs::validate_pack(&pack, &cl_packs, canary.as_ref(), blindness.as_ref()).map(|_| ());
+            packs::validate_pack(&pack, &cl_packs, canary.as_ref(), blindness.as_ref(), None)
+                .map(|_| ());
         check_error(case, outcome);
     }
 }

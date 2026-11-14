@@ -8,6 +8,110 @@ use crate::jsonvalue::JsonValue;
 use crate::names::slugify_check;
 
 pub const PACK_FORMAT: &str = "tameshi-pack/1";
+pub const PACK_FORMAT_2: &str = "tameshi-pack/2";
+pub const DECISION_FORMAT: &str = "tameshi-decision/1";
+
+/// The recommendation words a decision document may carry
+/// under DC-1, the ruling set of the generator with the
+/// kill word the decision record admits.
+pub const RECOMMENDATION_WORDS: [&str; 4] = ["keep", "demote", "quarantine", "kill"];
+
+/// The fields of a decision document under DC-1.
+const DECISION_FIELDS: [&str; 6] = [
+    "format",
+    "check",
+    "recommendation",
+    "rationale",
+    "model",
+    "run",
+];
+
+/// The fields of the recommendation record a pack carries
+/// under DC-2, the decision document's fields with the
+/// check standing in the pack itself.
+pub const RECOMMENDATION_FIELDS: [&str; 4] = ["recommendation", "rationale", "model", "run"];
+
+/// Read and validate one decision document under DC-1,
+/// handing back the check it names and the recommendation
+/// record the pack carries for it.
+pub fn read_decision(document: &JsonValue) -> Result<(String, JsonValue)> {
+    let fields = match document.as_object() {
+        Some(fields) => fields,
+        None => {
+            return Err(TameshiError::refusal(
+                "the decision document has the wrong fields (missing check, format, model, rationale, recommendation, run)",
+            ))
+        }
+    };
+    let standing: Vec<&str> = fields.iter().map(|(name, _)| name.as_str()).collect();
+    let missing: Vec<&str> = DECISION_FIELDS
+        .iter()
+        .copied()
+        .filter(|field| !standing.contains(field))
+        .collect();
+    let unexpected: Vec<&str> = standing
+        .iter()
+        .copied()
+        .filter(|name| !DECISION_FIELDS.contains(name))
+        .collect();
+    if !missing.is_empty() || !unexpected.is_empty() {
+        let mut details: Vec<String> = Vec::new();
+        if !missing.is_empty() {
+            details.push(format!("missing {}", missing.join(", ")));
+        }
+        if !unexpected.is_empty() {
+            details.push(format!("unexpected {}", unexpected.join(", ")));
+        }
+        return Err(TameshiError::refusal(format!(
+            "the decision document has the wrong fields ({})",
+            details.join("; ")
+        )));
+    }
+    if document.get("format").and_then(|value| value.as_text()) != Some(DECISION_FORMAT) {
+        return Err(TameshiError::refusal(
+            "the decision document carries the wrong format name",
+        ));
+    }
+    let check = ingest::require_name(
+        document.get("check").unwrap_or(&JsonValue::Null),
+        "decision check name",
+    )?
+    .to_string();
+    let recommendation = ingest::require_text(
+        document.get("recommendation").unwrap_or(&JsonValue::Null),
+        "decision recommendation",
+    )?;
+    if !RECOMMENDATION_WORDS.contains(&recommendation) {
+        return Err(TameshiError::refusal(format!(
+            "the decision document carries an unknown recommendation ({recommendation})"
+        )));
+    }
+    let rationale = ingest::require_text(
+        document.get("rationale").unwrap_or(&JsonValue::Null),
+        "decision rationale",
+    )?
+    .to_string();
+    let model = ingest::require_text(
+        document.get("model").unwrap_or(&JsonValue::Null),
+        "decision model",
+    )?
+    .to_string();
+    let run = ingest::require_text(
+        document.get("run").unwrap_or(&JsonValue::Null),
+        "decision run",
+    )?
+    .to_string();
+    let record = JsonValue::Object(vec![
+        (
+            "recommendation".to_string(),
+            JsonValue::Text(recommendation.to_string()),
+        ),
+        ("rationale".to_string(), JsonValue::Text(rationale)),
+        ("model".to_string(), JsonValue::Text(model)),
+        ("run".to_string(), JsonValue::Text(run)),
+    ]);
+    Ok((check, record))
+}
 pub const REQUIRED_CANARY_DEFECTS: i64 = 30;
 pub const REQUIRED_CI_HISTORY_DAYS: i64 = 14;
 
@@ -272,6 +376,7 @@ fn assemble_one(
     traces_by_check: Option<&Vec<(String, Vec<JsonValue>)>>,
     blindness_supplied: bool,
     unmatched_trace_count: i64,
+    recommendation: Option<&JsonValue>,
 ) -> Result<JsonValue> {
     let check = catchledger_pack
         .get("check")
@@ -323,10 +428,17 @@ fn assemble_one(
         .get("scorecard")
         .cloned()
         .unwrap_or(JsonValue::Null);
-    Ok(JsonValue::Object(vec![
+    let mut pack_fields: Vec<(String, JsonValue)> = vec![
         (
             "format".to_string(),
-            JsonValue::Text(PACK_FORMAT.to_string()),
+            JsonValue::Text(
+                if recommendation.is_some() {
+                    PACK_FORMAT_2
+                } else {
+                    PACK_FORMAT
+                }
+                .to_string(),
+            ),
         ),
         (
             "repo".to_string(),
@@ -381,7 +493,11 @@ fn assemble_one(
                 ),
             ]),
         ),
-    ]))
+    ];
+    if let Some(record) = recommendation {
+        pack_fields.push(("recommendation".to_string(), record.clone()));
+    }
+    Ok(JsonValue::Object(pack_fields))
 }
 
 fn pack_filename(index: usize, check: &str) -> String {
@@ -394,6 +510,7 @@ pub fn assemble_packs(
     catchledger_packs: &[JsonValue],
     canary_document: Option<&JsonValue>,
     blindness_document: Option<&JsonValue>,
+    decision: Option<&(String, JsonValue)>,
 ) -> Result<Vec<(String, JsonValue)>> {
     let mut traces_by_check: Option<Vec<(String, Vec<JsonValue>)>> = None;
     let mut unmatched_trace_count: i64 = 0;
@@ -416,14 +533,33 @@ pub fn assemble_packs(
         let right = b.get("check").and_then(|item| item.as_text()).unwrap_or("");
         left.cmp(right)
     });
+    if let Some((named, _)) = decision {
+        let known = ordered
+            .iter()
+            .any(|pack| pack.get("check").and_then(|item| item.as_text()) == Some(named.as_str()));
+        if !known {
+            return Err(TameshiError::refusal(format!(
+                "the decision document names a check the run does not assemble ({named})"
+            )));
+        }
+    }
     let mut packs = Vec::new();
     for (position, catchledger_pack) in ordered.iter().enumerate() {
+        let check_name = catchledger_pack
+            .get("check")
+            .and_then(|item| item.as_text())
+            .unwrap_or("");
+        let recommendation = match decision {
+            Some((named, record)) if named == check_name => Some(record),
+            _ => None,
+        };
         let pack = assemble_one(
             catchledger_pack,
             canary_document,
             traces_by_check.as_ref(),
             blindness_document.is_some(),
             unmatched_trace_count,
+            recommendation,
         )?;
         let check = pack
             .get("check")
@@ -442,6 +578,7 @@ pub fn validate_pack(
     catchledger_packs: &[JsonValue],
     canary_document: Option<&JsonValue>,
     blindness_document: Option<&JsonValue>,
+    decision: Option<&(String, JsonValue)>,
 ) -> Result<bool> {
     if !pack.is_object() {
         return Err(TameshiError::pack_validation(
@@ -456,7 +593,12 @@ pub fn validate_pack(
             ))
         }
     };
-    let rebuilt = assemble_packs(catchledger_packs, canary_document, blindness_document)?;
+    let rebuilt = assemble_packs(
+        catchledger_packs,
+        canary_document,
+        blindness_document,
+        decision,
+    )?;
     let mut expected: Option<&JsonValue> = None;
     for (_, candidate) in &rebuilt {
         if candidate.get("check").and_then(|item| item.as_text()) == Some(check_name.as_str()) {
