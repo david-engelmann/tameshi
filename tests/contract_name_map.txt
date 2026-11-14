@@ -111,3 +111,16 @@ test_scored_defects_exclude_not_applicable_rows | recording-case | tests/conform
 test_seed_files_present | rust-test | tests/setup.rs | test_seed_files_present
 test_thirteen_history_days_refuse_a_ruling | recording-case | tests/conformance/port1_cases.json | thirteen history days refuse on the CI leg alone
 test_twenty_nine_scored_defects_refuse_a_ruling | recording-case | tests/conformance/port1_cases.json | twenty nine scored defects refuse on the canary leg alone
+test_a_decision_with_a_wrong_format_name_is_refused | rust-test | tests/decision.rs | test_a_decision_with_a_wrong_format_name_is_refused
+test_an_unknown_field_in_a_decision_is_refused | rust-test | tests/decision.rs | test_an_unknown_field_in_a_decision_is_refused
+test_a_decision_with_an_unknown_recommendation_is_refused | rust-test | tests/decision.rs | test_a_decision_with_an_unknown_recommendation_is_refused
+test_a_pack_with_a_decision_stands_as_pack_format_2 | rust-test | tests/decision.rs | test_a_pack_with_a_decision_stands_as_pack_format_2
+test_a_pack_without_a_decision_stands_as_before | rust-test | tests/decision.rs | test_a_pack_without_a_decision_stands_as_before
+test_a_decision_naming_a_check_the_run_does_not_assemble_is_refused | rust-test | tests/decision.rs | test_a_decision_naming_a_check_the_run_does_not_assemble_is_refused
+test_a_decision_document_is_validated_before_any_pack_is_written | rust-test | tests/decision.rs | test_a_decision_document_is_validated_before_any_pack_is_written
+test_pack_format_2_validation_reads_the_recommendation | rust-test | tests/decision.rs | test_pack_format_2_validation_reads_the_recommendation
+test_a_pack_format_2_without_a_recommendation_is_refused | rust-test | tests/decision.rs | test_a_pack_format_2_without_a_recommendation_is_refused
+test_a_kill_ruling_issues_on_a_pack_recommending_kill | rust-test | tests/decision.rs | test_a_kill_ruling_issues_on_a_pack_recommending_kill
+test_a_kill_ruling_without_a_recommendation_is_refused | rust-test | tests/decision.rs | test_a_kill_ruling_without_a_recommendation_is_refused
+test_a_kill_ruling_against_another_recommendation_is_refused | rust-test | tests/decision.rs | test_a_kill_ruling_against_another_recommendation_is_refused
+test_a_kill_ruling_below_the_floor_refuses_on_the_floor | rust-test | tests/decision.rs | test_a_kill_ruling_below_the_floor_refuses_on_the_floor

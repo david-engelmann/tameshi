@@ -54,24 +54,58 @@ fn validate_pack(pack: &JsonValue) -> Result<()> {
     if !pack.is_object() {
         return Err(TameshiError::refusal("an evidence pack must be an object"));
     }
-    let fields_ok = match pack.as_object() {
-        Some(fields) => {
-            fields.len() == PACK_FIELDS.len()
-                && PACK_FIELDS
-                    .iter()
-                    .all(|field| fields.iter().any(|(name, _)| name == field))
-        }
-        None => false,
+    let format = pack.get("format").and_then(|item| item.as_text());
+    let fields: Vec<&str> = match pack.as_object() {
+        Some(fields) => fields.iter().map(|(name, _)| name.as_str()).collect(),
+        None => Vec::new(),
     };
-    if !fields_ok {
-        return Err(TameshiError::refusal(
-            "the evidence pack has the wrong fields",
-        ));
-    }
-    if pack.get("format").and_then(|item| item.as_text()) != Some(packs::PACK_FORMAT) {
-        return Err(TameshiError::refusal(
-            "the evidence pack carries the wrong format name",
-        ));
+    if format == Some(packs::PACK_FORMAT_2) {
+        // The second pack standing of DC-3. The pack carries
+        // the fields of the first standing and the
+        // recommendation, and the recommendation record
+        // carries exactly its four fields.
+        if !fields.contains(&"recommendation") {
+            return Err(TameshiError::refusal(
+                "the evidence pack carries the format tameshi-pack/2 and no recommendation",
+            ));
+        }
+        let fields_ok = fields.len() == PACK_FIELDS.len() + 1
+            && PACK_FIELDS.iter().all(|field| fields.contains(field));
+        if !fields_ok {
+            return Err(TameshiError::refusal(
+                "the evidence pack has the wrong fields",
+            ));
+        }
+        let record = pack
+            .get("recommendation")
+            .cloned()
+            .unwrap_or(JsonValue::Null);
+        let record_fields: Vec<&str> = match record.as_object() {
+            Some(held) => held.iter().map(|(name, _)| name.as_str()).collect(),
+            None => Vec::new(),
+        };
+        let record_ok = record_fields.len() == packs::RECOMMENDATION_FIELDS.len()
+            && packs::RECOMMENDATION_FIELDS
+                .iter()
+                .all(|field| record_fields.contains(field));
+        if !record_ok {
+            return Err(TameshiError::refusal(
+                "the evidence pack has the wrong fields",
+            ));
+        }
+    } else {
+        let fields_ok = fields.len() == PACK_FIELDS.len()
+            && PACK_FIELDS.iter().all(|field| fields.contains(field));
+        if !fields_ok {
+            return Err(TameshiError::refusal(
+                "the evidence pack has the wrong fields",
+            ));
+        }
+        if format != Some(packs::PACK_FORMAT) {
+            return Err(TameshiError::refusal(
+                "the evidence pack carries the wrong format name",
+            ));
+        }
     }
     validate_pack_name(
         pack.get("repo").unwrap_or(&JsonValue::Null),
@@ -224,6 +258,32 @@ pub fn render_body(pack: &JsonValue, record: &JsonValue) -> String {
             getv(record, "expiry").as_text().unwrap_or("").to_string(),
         ));
     }
+    let recommendation = getv(pack, "recommendation");
+    if !matches!(recommendation, JsonValue::Null) {
+        // The citation rows of DC-5, standing where a pack
+        // carries a recommendation and nowhere else.
+        rows.push((
+            "Decision model recommendation",
+            getv(recommendation, "recommendation")
+                .as_text()
+                .unwrap_or("")
+                .to_string(),
+        ));
+        rows.push((
+            "Decision model",
+            getv(recommendation, "model")
+                .as_text()
+                .unwrap_or("")
+                .to_string(),
+        ));
+        rows.push((
+            "Decision rationale",
+            getv(recommendation, "rationale")
+                .as_text()
+                .unwrap_or("")
+                .to_string(),
+        ));
+    }
     let perf_number = |field: &str| -> String {
         if performance_stands {
             number_text(getv(performance, field))
@@ -339,6 +399,7 @@ fn ruling_words(ruling: &str) -> Option<(&'static str, &'static str)> {
         "keep" => Some(("keep", "required")),
         "demote" => Some(("demote-to-advisory", "advisory")),
         "quarantine" => Some(("quarantine", "quarantined")),
+        "kill" => Some(("kill", "removed")),
         _ => None,
     }
 }
@@ -354,11 +415,6 @@ pub fn generate_ruling(
     today: Option<&JsonValue>,
 ) -> Result<(JsonValue, String)> {
     validate_pack(pack)?;
-    if ruling == "kill" {
-        return Err(TameshiError::refusal(
-            "kill is outside the ruling set in this slice and waits for its own later rule",
-        ));
-    }
     let (verdict, state) = match ruling_words(ruling) {
         Some(words) => words,
         None => {
@@ -407,7 +463,22 @@ pub fn generate_ruling(
             .unwrap_or("");
         return Err(floor_refusal(check, &recomputed));
     }
-    let record = JsonValue::Object(vec![
+    if ruling == "kill" {
+        // The kill gate of DC-4, read after the floor. A
+        // kill issues only on a pack whose recommendation
+        // record recommends it.
+        let recommended = pack
+            .get("recommendation")
+            .and_then(|record| record.get("recommendation"))
+            .and_then(|word| word.as_text())
+            == Some("kill");
+        if !recommended {
+            return Err(TameshiError::refusal(
+                "a kill ruling requires a decision record recommending kill in the pack",
+            ));
+        }
+    }
+    let mut record_fields: Vec<(String, JsonValue)> = vec![
         (
             "format".to_string(),
             JsonValue::Text(RULING_FORMAT.to_string()),
@@ -444,7 +515,18 @@ pub fn generate_ruling(
                 ("signed_at".to_string(), JsonValue::Null),
             ]),
         ),
-    ]);
+    ];
+    if let Some(recommendation) = pack.get("recommendation") {
+        // The citation of DC-5. The recommendation stands
+        // in the ruling record beside the floor, ahead of
+        // the signature.
+        let signature = record_fields.pop();
+        record_fields.push(("recommendation".to_string(), recommendation.clone()));
+        if let Some(signature) = signature {
+            record_fields.push(signature);
+        }
+    }
+    let record = JsonValue::Object(record_fields);
     let body = render_body(pack, &record);
     Ok((record, body))
 }

@@ -1,0 +1,8 @@
+{
+  "format": "tameshi-decision/1",
+  "check": "unit checks",
+  "recommendation": "keep",
+  "rationale": "The model chose keep with confidence 0.52, its probabilities standing at keep 0.64, demote 0.21, quarantine 0.12, and kill 0.03 over the pack evidence.",
+  "model": "jev-1.13.0",
+  "run": "round-5-live-1"
+}
