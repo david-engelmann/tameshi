@@ -18,6 +18,18 @@ pub const BLINDNESS_FORMAT: &str = "blindgate-evidence/1";
 pub const HISTORY_WINDOW_FIELD: &str = "history_window";
 
 pub const RESULT_WORDS: [&str; 4] = ["caught", "waved-through", "not-applicable", "gate-broken"];
+
+/// The result words a canaryfield document may carry, the four the
+/// counts stand over and the timed-out word canaryfield's timeout
+/// slice added to its result documents, which is counted under
+/// none of the four and counts as scored.
+pub const KNOWN_RESULT_WORDS: [&str; 5] = [
+    "caught",
+    "waved-through",
+    "not-applicable",
+    "gate-broken",
+    "timed-out",
+];
 pub const OUTCOME_WORDS: [&str; 3] = ["catch", "false_block", "unattributed"];
 
 const SCORECARD_FIELDS: [&str; 13] = [
@@ -291,7 +303,7 @@ pub fn validate_normalized_canary(value: &JsonValue) -> Result<()> {
             )?;
         }
         let result = row.get("result").and_then(|item| item.as_text());
-        if !matches!(result, Some(word) if RESULT_WORDS.contains(&word)) {
+        if !matches!(result, Some(word) if KNOWN_RESULT_WORDS.contains(&word)) {
             return Err(TameshiError::refusal(
                 "a canaryfield result word is not a known result word",
             ));
@@ -449,7 +461,7 @@ pub fn validate_canary_document(document: &JsonValue) -> Result<()> {
         if let Some(gate_map) = row.get("gates").and_then(|item| item.as_object()) {
             for (_, result) in gate_map {
                 let word = result.as_text();
-                if !matches!(word, Some(word) if RESULT_WORDS.contains(&word)) {
+                if !matches!(word, Some(word) if KNOWN_RESULT_WORDS.contains(&word)) {
                     return Err(TameshiError::refusal(
                         "a canaryfield result word is not a known result word",
                     ));

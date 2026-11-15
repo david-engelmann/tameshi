@@ -133,11 +133,16 @@ fn ratio(caught: i64, scored: i64) -> JsonValue {
     JsonValue::Float(micro as f64 / 1_000_000.0)
 }
 
-fn derived_scored(counts: &JsonValue) -> i64 {
+fn derived_scored(counts: &JsonValue, results: &[JsonValue]) -> i64 {
     let mut total: i64 = 0;
     for word in ["caught", "waved-through", "gate-broken"] {
         if let Some(JsonValue::Int(held)) = counts.get(word) {
             total += held;
+        }
+    }
+    for row in results {
+        if row.get("result").and_then(|item| item.as_text()) == Some("timed-out") {
+            total += 1;
         }
     }
     total
@@ -237,7 +242,7 @@ pub fn validate_canary_performance(performance: &JsonValue) -> Result<()> {
             }
         }
         let result = row.get("result").and_then(|item| item.as_text());
-        if !matches!(result, Some(word) if ingest::RESULT_WORDS.contains(&word)) {
+        if !matches!(result, Some(word) if ingest::KNOWN_RESULT_WORDS.contains(&word)) {
             return Err(TameshiError::refusal(
                 "a canary performance result word is not a known result word",
             ));
@@ -257,7 +262,7 @@ pub fn validate_canary_performance(performance: &JsonValue) -> Result<()> {
             "the canary performance counts disagree with their result rows",
         ));
     }
-    let scored = derived_scored(counts);
+    let scored = derived_scored(counts, results);
     let scored_ok = match performance.get("scored") {
         Some(value) => value.whole_digits() == Some(scored.to_string()),
         None => false,
@@ -292,7 +297,7 @@ pub fn canary_performance(normalized: &JsonValue) -> Result<Option<JsonValue>> {
         .map(|items| items.to_vec())
         .unwrap_or_default();
     let counts = ingest::tally_canary_results(&results);
-    let scored = derived_scored(&counts);
+    let scored = derived_scored(&counts, &results);
     let caught = match counts.get("caught") {
         Some(JsonValue::Int(held)) => *held,
         _ => 0,
@@ -339,7 +344,15 @@ pub fn floor_accounting(performance: &JsonValue, catch_record: &JsonValue) -> Re
     let held_defects = if matches!(performance, JsonValue::Null) {
         0
     } else {
-        derived_scored(performance.get("counts").unwrap_or(&JsonValue::Null))
+        let empty: Vec<JsonValue> = Vec::new();
+        let results = performance
+            .get("results")
+            .and_then(|item| item.as_list())
+            .unwrap_or(&empty);
+        derived_scored(
+            performance.get("counts").unwrap_or(&JsonValue::Null),
+            results,
+        )
     };
     let held_days = catch_record_days(catch_record)?;
     Ok(JsonValue::Object(vec![
