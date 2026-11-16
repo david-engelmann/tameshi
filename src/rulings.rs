@@ -714,3 +714,22 @@ pub fn validate_ruling(record: &JsonValue, pack: &JsonValue) -> Result<bool> {
     validate_signature_block(record)?;
     Ok(true)
 }
+
+/// Validate a supplied ruling body against the body the rule
+/// door renders from the same record and pack. The comparison
+/// stands over the bytes themselves, because a body is its
+/// rendering and a respelling of it is a different document.
+/// The record stands validated under validate_ruling before
+/// this reading runs at the door, so the body is rendered
+/// from the record as supplied standing validated, and the
+/// proof limit the fourth slice's amendment states stands
+/// unchanged.
+pub fn validate_ruling_body(supplied: &[u8], record: &JsonValue, pack: &JsonValue) -> Result<bool> {
+    let rendered = render_body(pack, record);
+    if supplied != rendered.as_bytes() {
+        return Err(TameshiError::pack_validation(
+            "the ruling body disagrees with the ruling record and its pack",
+        ));
+    }
+    Ok(true)
+}

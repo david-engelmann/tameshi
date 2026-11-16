@@ -24,6 +24,13 @@ pub fn read_json_document(text: &str, label: &str) -> Result<JsonValue> {
     }
 }
 
+/// Read a document's raw bytes from a local file under its
+/// label, with the refusal the command line gives a file it
+/// cannot read.
+pub fn read_file_bytes(path: &Path, label: &str) -> Result<Vec<u8>> {
+    std::fs::read(path).map_err(|_| TameshiError::refusal(format!("the {label} could not be read")))
+}
+
 /// Read a document from a local file under its label, with the
 /// refusal the command line gives a file it cannot read.
 pub fn read_json_file(path: &Path, label: &str) -> Result<JsonValue> {

@@ -47,7 +47,8 @@ const ASSEMBLE_USAGE: &str = "usage: tameshi assemble --catchledger PATH [--cana
 const RULE_USAGE: &str =
     "usage: tameshi rule --pack PATH --ruling WORD [--expires DATE] [--today DATE] --out DIR";
 const VALIDATE_USAGE: &str = "usage: tameshi validate --pack PATH --catchledger PATH [--canaryfield PATH] [--blindgate PATH] [--decision PATH]";
-const VALIDATE_RULING_USAGE: &str = "usage: tameshi validate-ruling --pack PATH --ruling PATH";
+const VALIDATE_RULING_USAGE: &str =
+    "usage: tameshi validate-ruling --pack PATH --ruling PATH [--body PATH]";
 
 const ASSEMBLE_HELP: &str = "usage: tameshi assemble --catchledger PATH [--canaryfield PATH] [--blindgate PATH] [--decision PATH] --packs-dir DIR
 
@@ -63,7 +64,8 @@ const VALIDATE_HELP: &str =
 
 validate an evidence pack against the pack rebuilt from its inputs
 ";
-const VALIDATE_RULING_HELP: &str = "usage: tameshi validate-ruling --pack PATH --ruling PATH
+const VALIDATE_RULING_HELP: &str =
+    "usage: tameshi validate-ruling --pack PATH --ruling PATH [--body PATH]
 
 validate a ruling record against the pack it was ruled from
 ";
@@ -150,6 +152,10 @@ const VALIDATE_RULING_FLAGS: &[FlagSpec] = &[
     FlagSpec {
         name: "ruling",
         required: true,
+    },
+    FlagSpec {
+        name: "body",
+        required: false,
     },
 ];
 
@@ -573,6 +579,10 @@ fn door_validate_ruling(values: &Values) -> Result<(), TameshiError> {
     let pack = reader::read_json_file(&path_of(values, "pack"), "evidence pack")?;
     let record = reader::read_json_file(&path_of(values, "ruling"), "ruling record")?;
     rulings::validate_ruling(&record, &pack)?;
+    if let Some(body_path) = values.get("body") {
+        let supplied = reader::read_file_bytes(&PathBuf::from(body_path), "ruling body")?;
+        rulings::validate_ruling_body(&supplied, &record, &pack)?;
+    }
     Ok(())
 }
 
