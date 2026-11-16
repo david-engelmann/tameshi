@@ -18,7 +18,7 @@ Checks have no lifecycle in mainstream tooling. A check is required or it is abs
 - Round 6 lands slice 4, the ruling record validation, reading a ruling record back against the pack it was ruled from and refusing it when any field the pack decides stands unfaithful, through a library reading and a fourth door, with the signature block read for shape and consistency alone because rulings stay human signed
 - Round 5 lands slice 3, the decision record and the kill ruling, carrying a recorded decision model recommendation into the pack as tameshi-pack/2 and issuing a kill ruling only above the floor on a pack that recommends it, with one live decision run over a synthetic pack standing in the examples
 - Round 4 closes the Rust port under obligations PORT3-1 to PORT3-6, carrying the command line whole into the binary with the three doors the Python carried and retiring the Python package and suite from the tree, the recorded battery and the earlier recordings standing as the specification from here on, with the reader bound standing as a stated port limit in the one band the round's probes found the Python completing past it
-- Closed rounds stand at 9 of 100
+- Closed rounds stand at 10 of 100
 - Seeded in October 2026. Part of the impatient programming portfolio, in the Gate Truth arc
 
 ## Licence
