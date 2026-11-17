@@ -1,0 +1,791 @@
+{
+  "gates": [
+    "tests"
+  ],
+  "rows": [
+    {
+      "defect_class": "stale metadata",
+      "gates": {
+        "tests": "caught"
+      },
+      "name": "stale version string",
+      "planted_exits": {
+        "tests": 1
+      },
+      "planted_file": "sample.py",
+      "planted_files": [
+        "sample.py"
+      ],
+      "seed": "seed-00"
+    },
+    {
+      "defect_class": "missing result",
+      "gates": {
+        "tests": "caught"
+      },
+      "name": "dropped return value",
+      "planted_exits": {
+        "tests": 1
+      },
+      "planted_file": "sample.py",
+      "planted_files": [
+        "sample.py"
+      ],
+      "seed": "seed-01"
+    },
+    {
+      "defect_class": "wrong predicate",
+      "gates": {
+        "tests": "caught"
+      },
+      "name": "inverted comparison",
+      "planted_exits": {
+        "tests": 1
+      },
+      "planted_file": "sample.py",
+      "planted_files": [
+        "sample.py"
+      ],
+      "seed": "seed-02"
+    },
+    {
+      "defect_class": "boundary error",
+      "gates": {
+        "tests": "caught"
+      },
+      "name": "off by one constant",
+      "planted_exits": {
+        "tests": 1
+      },
+      "planted_file": "sample.py",
+      "planted_files": [
+        "sample.py"
+      ],
+      "seed": "seed-03"
+    },
+    {
+      "defect_class": "hidden failure",
+      "gates": {
+        "tests": "caught"
+      },
+      "name": "swallowed exception",
+      "planted_exits": {
+        "tests": 1
+      },
+      "planted_file": "sample.py",
+      "planted_files": [
+        "sample.py"
+      ],
+      "seed": "seed-04"
+    },
+    {
+      "defect_class": "wrong flag",
+      "gates": {
+        "tests": "caught"
+      },
+      "name": "inverted boolean literal",
+      "planted_exits": {
+        "tests": 1
+      },
+      "planted_file": "sample.py",
+      "planted_files": [
+        "sample.py"
+      ],
+      "seed": "seed-05"
+    },
+    {
+      "defect_class": "wrong computation",
+      "gates": {
+        "tests": "caught"
+      },
+      "name": "swapped arithmetic operator",
+      "planted_exits": {
+        "tests": 1
+      },
+      "planted_file": "sample.py",
+      "planted_files": [
+        "sample.py"
+      ],
+      "seed": "seed-06"
+    },
+    {
+      "defect_class": "missing input",
+      "gates": {
+        "tests": "waved-through"
+      },
+      "name": "dropped call argument",
+      "planted_exits": {
+        "tests": 0
+      },
+      "planted_file": "sample.py",
+      "planted_files": [
+        "sample.py"
+      ],
+      "seed": "seed-07"
+    },
+    {
+      "defect_class": "wrong branch",
+      "gates": {
+        "tests": "caught"
+      },
+      "name": "negated condition",
+      "planted_exits": {
+        "tests": 1
+      },
+      "planted_file": "sample.py",
+      "planted_files": [
+        "sample.py"
+      ],
+      "seed": "seed-08"
+    },
+    {
+      "defect_class": "missing data",
+      "gates": {
+        "tests": "waved-through"
+      },
+      "name": "removed collection element",
+      "planted_exits": {
+        "tests": 0
+      },
+      "planted_file": "sample.py",
+      "planted_files": [
+        "sample.py"
+      ],
+      "seed": "seed-09"
+    },
+    {
+      "defect_class": "boundary error",
+      "gates": {
+        "tests": "caught"
+      },
+      "name": "range bound shifted by one",
+      "planted_exits": {
+        "tests": 1
+      },
+      "planted_file": "sample.py",
+      "planted_files": [
+        "sample.py"
+      ],
+      "seed": "seed-10"
+    },
+    {
+      "defect_class": "wrong result",
+      "gates": {
+        "tests": "caught"
+      },
+      "name": "wrong variable returned",
+      "planted_exits": {
+        "tests": 1
+      },
+      "planted_file": "sample.py",
+      "planted_files": [
+        "sample.py"
+      ],
+      "seed": "seed-11"
+    },
+    {
+      "defect_class": "wrong computation",
+      "gates": {
+        "tests": "caught"
+      },
+      "name": "swapped operand order",
+      "planted_exits": {
+        "tests": 1
+      },
+      "planted_file": "sample.py",
+      "planted_files": [
+        "sample.py"
+      ],
+      "seed": "seed-12"
+    },
+    {
+      "defect_class": "missing fallback",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "dropped else branch",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-13"
+    },
+    {
+      "defect_class": "wrong predicate",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "swapped boolean operator",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-14"
+    },
+    {
+      "defect_class": "missing wait",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "dropped await",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-15"
+    },
+    {
+      "defect_class": "hidden failure",
+      "gates": {
+        "tests": "waved-through"
+      },
+      "name": "widened exception handler",
+      "planted_exits": {
+        "tests": 0
+      },
+      "planted_file": "sample.py",
+      "planted_files": [
+        "sample.py"
+      ],
+      "seed": "seed-16"
+    },
+    {
+      "defect_class": "wrong data",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "swapped dictionary entry",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-17"
+    },
+    {
+      "defect_class": "wrong branch",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "inverted truth test",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-18"
+    },
+    {
+      "defect_class": "wrong variable",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "reassigned loop variable",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-19"
+    },
+    {
+      "defect_class": "wrong input",
+      "gates": {
+        "tests": "caught"
+      },
+      "name": "swapped call argument order",
+      "planted_exits": {
+        "tests": 1
+      },
+      "planted_file": "sample.py",
+      "planted_files": [
+        "sample.py"
+      ],
+      "seed": "seed-20"
+    },
+    {
+      "defect_class": "wrong text",
+      "gates": {
+        "tests": "caught"
+      },
+      "name": "altered string literal",
+      "planted_exits": {
+        "tests": 1
+      },
+      "planted_file": "sample.py",
+      "planted_files": [
+        "sample.py"
+      ],
+      "seed": "seed-21"
+    },
+    {
+      "defect_class": "wrong sign",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "dropped numeric negation",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-22"
+    },
+    {
+      "defect_class": "wrong flow",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "swapped loop control",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-23"
+    },
+    {
+      "defect_class": "wrong computation",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "swapped augmented assignment operator",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-24"
+    },
+    {
+      "defect_class": "wrong predicate",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "identity test replaced by equality",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-25"
+    },
+    {
+      "defect_class": "boundary error",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "subscript index shifted by one",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-26"
+    },
+    {
+      "defect_class": "wrong input",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "swapped keyword argument values",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-27"
+    },
+    {
+      "defect_class": "wrong error",
+      "gates": {
+        "tests": "caught"
+      },
+      "name": "swapped raised error",
+      "planted_exits": {
+        "tests": 1
+      },
+      "planted_file": "sample.py",
+      "planted_files": [
+        "sample.py"
+      ],
+      "seed": "seed-28"
+    },
+    {
+      "defect_class": "boundary error",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "slice stop shifted by one",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-29"
+    },
+    {
+      "defect_class": "wrong default",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "shifted numeric default",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-30"
+    },
+    {
+      "defect_class": "wrong attribute",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "swapped sibling attribute",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-31"
+    },
+    {
+      "defect_class": "exposed failure",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "narrowed exception handler",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-32"
+    },
+    {
+      "defect_class": "wrong default",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "swapped parameter defaults",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-33"
+    },
+    {
+      "defect_class": "missing cleanup",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "dropped finally body",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-34"
+    },
+    {
+      "defect_class": "missing wrapper",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "dropped decorator",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-35"
+    },
+    {
+      "defect_class": "missing recovery",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "dropped exception handler",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-36"
+    },
+    {
+      "defect_class": "missing production",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "dropped yield",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-37"
+    },
+    {
+      "defect_class": "wrong predicate",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "dropped condition term",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-38"
+    },
+    {
+      "defect_class": "missing inheritance",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "dropped base class",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-39"
+    },
+    {
+      "defect_class": "boundary error",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "shifted slice start",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-40"
+    },
+    {
+      "defect_class": "wrong flow",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "reversed loop control",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-41"
+    },
+    {
+      "defect_class": "wrong scope",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "dropped scope declaration",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-42"
+    },
+    {
+      "defect_class": "wrong data",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "swapped assignment values",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-43"
+    },
+    {
+      "defect_class": "missing fallback",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "dropped loop else clause",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-44"
+    },
+    {
+      "defect_class": "missing input",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "dropped keyword argument",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-45"
+    },
+    {
+      "defect_class": "wrong direction",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "flipped range step sign",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-46"
+    },
+    {
+      "defect_class": "wrong flag",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "dropped logical negation",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-47"
+    },
+    {
+      "defect_class": "missing fallback",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "dropped try else clause",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-48"
+    },
+    {
+      "defect_class": "boundary error",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "shifted slice step",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-49"
+    },
+    {
+      "defect_class": "wrong data",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "swapped conditional expression arms",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-50"
+    },
+    {
+      "defect_class": "wrong error",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "dropped exception chain",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-51"
+    },
+    {
+      "defect_class": "boundary error",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "dropped slice bound",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-52"
+    },
+    {
+      "defect_class": "wrong computation",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "dropped augmentation",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-53"
+    },
+    {
+      "defect_class": "wrong input",
+      "gates": {
+        "tests": "caught"
+      },
+      "name": "swapped parameter order",
+      "planted_exits": {
+        "tests": 1
+      },
+      "planted_file": "sample.py",
+      "planted_files": [
+        "sample.py"
+      ],
+      "seed": "seed-54"
+    },
+    {
+      "defect_class": "missing input",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "dropped import",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-55"
+    },
+    {
+      "defect_class": "wrong flow",
+      "gates": {
+        "tests": "caught"
+      },
+      "name": "dropped return statement",
+      "planted_exits": {
+        "tests": 1
+      },
+      "planted_file": "sample.py",
+      "planted_files": [
+        "sample.py"
+      ],
+      "seed": "seed-56"
+    },
+    {
+      "defect_class": "wrong predicate",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "swapped boolean operands",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-57"
+    },
+    {
+      "defect_class": "wrong data",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "dropped comprehension condition",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-58"
+    },
+    {
+      "defect_class": "wrong predicate",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "flipped later comparison operator",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-59"
+    },
+    {
+      "defect_class": "wrong data",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "swapped dictionary entry values",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-60"
+    },
+    {
+      "defect_class": "wrong data",
+      "gates": {
+        "tests": "waved-through"
+      },
+      "name": "swapped sequence literal elements",
+      "planted_exits": {
+        "tests": 0
+      },
+      "planted_file": "sample.py",
+      "planted_files": [
+        "sample.py"
+      ],
+      "seed": "seed-61"
+    },
+    {
+      "defect_class": "wrong flow",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "dropped assert statement",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-62"
+    },
+    {
+      "defect_class": "wrong sign",
+      "gates": {
+        "tests": "not-applicable"
+      },
+      "name": "added numeric negation",
+      "planted_exits": {},
+      "planted_file": null,
+      "planted_files": [],
+      "seed": "seed-63"
+    }
+  ]
+}
