@@ -50,6 +50,34 @@ fn validate_pack_name(value: &JsonValue, label: &str) -> Result<()> {
     Ok(())
 }
 
+/// Read the pack's blindness traces under the discipline
+/// the assemble reading demands of a trace, every entry
+/// standing in the four field shape with its fields as
+/// nonempty text and its check naming the pack's own check.
+fn validate_blindness_traces(pack: &JsonValue) -> Result<()> {
+    let traces = match pack.get("blindness_traces").and_then(|item| item.as_list()) {
+        Some(traces) => traces,
+        None => {
+            return Err(TameshiError::refusal(
+                "the evidence pack blindness traces must be a list",
+            ))
+        }
+    };
+    let check = pack
+        .get("check")
+        .and_then(|item| item.as_text())
+        .unwrap_or("");
+    for trace in traces {
+        let name = ingest::validate_blindness_trace(trace)?;
+        if name != check {
+            return Err(TameshiError::refusal(
+                "the evidence pack blindness traces must name the pack's own check",
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn validate_pack(pack: &JsonValue) -> Result<()> {
     if !pack.is_object() {
         return Err(TameshiError::refusal("an evidence pack must be an object"));
@@ -135,15 +163,7 @@ fn validate_pack(pack: &JsonValue) -> Result<()> {
         ));
     }
     packs::validate_canary_performance(pack.get("canary_performance").unwrap_or(&JsonValue::Null))?;
-    if pack
-        .get("blindness_traces")
-        .and_then(|item| item.as_list())
-        .is_none()
-    {
-        return Err(TameshiError::refusal(
-            "the evidence pack blindness traces must be a list",
-        ));
-    }
+    validate_blindness_traces(pack)?;
     if !pack
         .get("floor")
         .map(|item| item.is_object())
