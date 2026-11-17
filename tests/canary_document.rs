@@ -150,6 +150,7 @@ fn test_an_emitted_shape_document_tallies_from_its_rows_and_not_its_summary() {
     assert_eq!(counts.get("not-applicable"), Some(&JsonValue::Int(1)));
     assert_eq!(counts.get("gate-broken"), Some(&JsonValue::Int(0)));
     assert_eq!(performance.get("scored"), Some(&JsonValue::Int(2)));
+    assert_eq!(performance.get("catch_rate"), Some(&JsonValue::Float(0.5)));
 }
 
 #[test]
