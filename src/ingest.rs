@@ -366,8 +366,7 @@ pub fn validate_history_window(value: &JsonValue) -> Result<()> {
 pub fn validate_canary_document(document: &JsonValue) -> Result<()> {
     let fields_ok = match document.as_object() {
         Some(fields) => {
-            fields.len() == 2
-                && fields.iter().any(|(name, _)| name == "gates")
+            fields.iter().any(|(name, _)| name == "gates")
                 && fields.iter().any(|(name, _)| name == "rows")
         }
         None => false,
