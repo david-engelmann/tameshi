@@ -573,6 +573,29 @@ pub fn normalize_canary_document(document: &JsonValue, check: &str) -> Result<Op
     ])))
 }
 
+/// Read one blindness trace entry under the discipline the
+/// blindness document reading demands, the exact four fields
+/// and the check standing as a name and the other three
+/// fields standing as nonempty text, and hand back the check
+/// name the entry carries. The ruling doors read a pack's
+/// traces through this same reading, so the discipline
+/// stands in one place.
+pub fn validate_blindness_trace(trace: &JsonValue) -> Result<String> {
+    require_exact_fields(trace, &BLINDNESS_TRACE_FIELDS, "blindness trace")?;
+    let check = require_name(
+        trace.get("check").unwrap_or(&JsonValue::Null),
+        "blindness trace check",
+    )?
+    .to_string();
+    for field in ["surface", "observation", "detail"] {
+        require_text(
+            trace.get(field).unwrap_or(&JsonValue::Null),
+            &format!("blindness trace {field}"),
+        )?;
+    }
+    Ok(check)
+}
+
 /// Return the blindness traces a document carries, grouped by check
 /// name in the order the checks first stand.
 pub fn read_blindness_traces(document: &JsonValue) -> Result<Vec<(String, Vec<JsonValue>)>> {
@@ -600,18 +623,7 @@ pub fn read_blindness_traces(document: &JsonValue) -> Result<Vec<(String, Vec<Js
     };
     let mut grouped: Vec<(String, Vec<JsonValue>)> = Vec::new();
     for trace in traces {
-        require_exact_fields(trace, &BLINDNESS_TRACE_FIELDS, "blindness trace")?;
-        let check = require_name(
-            trace.get("check").unwrap_or(&JsonValue::Null),
-            "blindness trace check",
-        )?
-        .to_string();
-        for field in ["surface", "observation", "detail"] {
-            require_text(
-                trace.get(field).unwrap_or(&JsonValue::Null),
-                &format!("blindness trace {field}"),
-            )?;
-        }
+        let check = validate_blindness_trace(trace)?;
         match grouped.iter_mut().find(|(name, _)| name == &check) {
             Some((_, held)) => held.push(trace.clone()),
             None => grouped.push((check, vec![trace.clone()])),
