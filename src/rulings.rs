@@ -28,6 +28,13 @@ const PACK_FIELDS: [&str; 13] = [
     "sources",
 ];
 
+const SOURCES_FIELDS: [&str; 4] = [
+    "catchledger_source",
+    "canary_origin",
+    "blindgate_evidence_supplied",
+    "blindgate_unmatched_trace_count",
+];
+
 /// The slug a check name gives its ruling files.
 pub fn ruling_slug(check: &str) -> String {
     slugify_check(check)
@@ -75,6 +82,16 @@ fn validate_blindness_traces(pack: &JsonValue) -> Result<()> {
             ));
         }
     }
+    Ok(())
+}
+
+/// Read the pack's sources record under the exact fields
+/// discipline, the record standing in exactly the four
+/// fields the assembly constructs, spoken under the label
+/// evidence pack sources record.
+fn validate_sources(pack: &JsonValue) -> Result<()> {
+    let sources = pack.get("sources").unwrap_or(&JsonValue::Null);
+    ingest::require_exact_fields(sources, &SOURCES_FIELDS, "evidence pack sources record")?;
     Ok(())
 }
 
@@ -178,15 +195,7 @@ fn validate_pack(pack: &JsonValue) -> Result<()> {
             "the evidence pack below floor mark must be a boolean",
         ));
     }
-    if !pack
-        .get("sources")
-        .map(|item| item.is_object())
-        .unwrap_or(false)
-    {
-        return Err(TameshiError::refusal(
-            "the evidence pack sources record must be an object",
-        ));
-    }
+    validate_sources(pack)?;
     Ok(())
 }
 
