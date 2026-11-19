@@ -368,7 +368,8 @@ fn test_an_empty_sources_record_is_refused_at_the_validate_ruling_door() {
 fn test_a_pack_with_a_sound_sources_record_rules_and_its_ruling_validates() {
     let dir = scratch("sound");
     let pack = assemble(&dir);
-    let names: Vec<&str> = sources_of(&pack)
+    let sources = sources_of(&pack);
+    let names: Vec<&str> = sources
         .as_object()
         .expect("the sources record stands as an object")
         .iter()
