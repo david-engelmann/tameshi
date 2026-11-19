@@ -59,6 +59,7 @@ const CATCH_EVIDENCE_FIELDS: [&str; 4] = ["type", "fix_commits", "validating_run
 const CANARY_RESULT_FIELDS: [&str; 4] = ["source_format", "gate", "counts", "results"];
 const CANARY_ROW_FIELDS: [&str; 5] = ["seed", "name", "defect_class", "result", "planted_files"];
 const BLINDNESS_TRACE_FIELDS: [&str; 4] = ["check", "surface", "observation", "detail"];
+const BLINDNESS_EVIDENCE_FIELDS: [&str; 2] = ["format", "traces"];
 const WINDOW_FIELDS: [&str; 2] = ["first_run_started_at", "last_run_updated_at"];
 
 /// Whether a character is whitespace to the Python strip reading,
@@ -599,19 +600,7 @@ pub fn validate_blindness_trace(trace: &JsonValue) -> Result<String> {
 /// Return the blindness traces a document carries, grouped by check
 /// name in the order the checks first stand.
 pub fn read_blindness_traces(document: &JsonValue) -> Result<Vec<(String, Vec<JsonValue>)>> {
-    let fields_ok = match document.as_object() {
-        Some(fields) => {
-            fields.len() == 2
-                && fields.iter().any(|(name, _)| name == "format")
-                && fields.iter().any(|(name, _)| name == "traces")
-        }
-        None => false,
-    };
-    if !fields_ok {
-        return Err(TameshiError::refusal(
-            "the blindness evidence must carry a format name and a traces list",
-        ));
-    }
+    require_exact_fields(document, &BLINDNESS_EVIDENCE_FIELDS, "blindness evidence")?;
     if document.get("format").and_then(|item| item.as_text()) != Some(BLINDNESS_FORMAT) {
         return Err(TameshiError::refusal(
             "the blindness evidence carries the wrong format name",
