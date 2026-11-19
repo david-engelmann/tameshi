@@ -369,19 +369,20 @@ fn test_a_pack_with_a_sound_sources_record_rules_and_its_ruling_validates() {
     let dir = scratch("sound");
     let pack = assemble(&dir);
     let sources = sources_of(&pack);
-    let names: Vec<&str> = sources
+    let mut names: Vec<&str> = sources
         .as_object()
         .expect("the sources record stands as an object")
         .iter()
         .map(|(name, _)| name.as_str())
         .collect();
+    names.sort();
     assert_eq!(
         names,
         [
-            "catchledger_source",
-            "canary_origin",
             "blindgate_evidence_supplied",
-            "blindgate_unmatched_trace_count"
+            "blindgate_unmatched_trace_count",
+            "canary_origin",
+            "catchledger_source"
         ],
         "the sources record carries exactly the four constructed fields"
     );
