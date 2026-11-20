@@ -710,6 +710,46 @@ fn test_a_decision_naming_a_check_carrying_a_line_feed_is_refused_at_the_name_re
         err.contains("the decision check name must not carry a newline"),
         "{err}"
     );
+    write(&dir, "decision.json", &decision("\\n", "kill"));
+    let (code, err) = run(
+        &dir,
+        &[
+            "assemble",
+            "--catchledger",
+            "cl-pack.json",
+            "--canaryfield",
+            "canary.json",
+            "--decision",
+            "decision.json",
+            "--packs-dir",
+            "packs",
+        ],
+    );
+    assert_eq!(code, 1);
+    assert!(
+        err.contains("the decision check name must be nonempty text"),
+        "{err}"
+    );
+    write(&dir, "decision.json", &decision("\\r", "kill"));
+    let (code, err) = run(
+        &dir,
+        &[
+            "assemble",
+            "--catchledger",
+            "cl-pack.json",
+            "--canaryfield",
+            "canary.json",
+            "--decision",
+            "decision.json",
+            "--packs-dir",
+            "packs",
+        ],
+    );
+    assert_eq!(code, 1);
+    assert!(
+        err.contains("the decision check name must be nonempty text"),
+        "{err}"
+    );
 }
 
 #[test]
