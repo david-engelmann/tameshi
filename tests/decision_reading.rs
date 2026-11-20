@@ -373,3 +373,116 @@ fn test_a_decision_carrying_a_further_field_under_a_name_carrying_a_space_is_ref
         "the refusal prints the name as it stands: {err}"
     );
 }
+
+#[test]
+fn test_a_decision_carrying_a_further_field_under_a_name_carrying_the_list_separator_is_refused_with_the_name_printed_across_it(
+) {
+    let dir = scratch("list-separator-alone");
+    let doc = decision().replace(
+        "\"run\": \"synthetic-run\"}",
+        "\"run\": \"synthetic-run\", \"zeal, confidence\": \"high\"}",
+    );
+    let (code, err) = assemble_with_decision_text(&dir, &doc);
+    assert_eq!(
+        code, 1,
+        "a decision carrying a further field under a name carrying the list separator refuses: {err}"
+    );
+    assert!(
+        err.contains("the decision document has the wrong fields (unexpected zeal, confidence)"),
+        "the refusal prints the name across the list separator it carries: {err}"
+    );
+}
+
+#[test]
+fn test_a_decision_carrying_a_further_field_under_a_name_carrying_the_part_separator_is_refused_with_the_name_printed_across_it(
+) {
+    let dir = scratch("part-separator-alone");
+    let doc = decision().replace(
+        "\"run\": \"synthetic-run\"}",
+        "\"run\": \"synthetic-run\", \"a; b\": \"high\"}",
+    );
+    let (code, err) = assemble_with_decision_text(&dir, &doc);
+    assert_eq!(
+        code, 1,
+        "a decision carrying a further field under a name carrying the part separator refuses: {err}"
+    );
+    assert!(
+        err.contains("the decision document has the wrong fields (unexpected a; b)"),
+        "the refusal prints the name across the part separator it carries: {err}"
+    );
+}
+
+#[test]
+fn test_a_decision_missing_one_field_and_carrying_a_further_field_under_a_name_carrying_the_part_separator_is_refused_with_the_name_printed_whole_in_the_unexpected_part(
+) {
+    let dir = scratch("part-separator-combined");
+    let doc = decision().replace("\"run\": \"synthetic-run\"}", "\"a; b\": \"high\"}");
+    let (code, err) = assemble_with_decision_text(&dir, &doc);
+    assert_eq!(
+        code, 1,
+        "a decision missing one field and carrying a further field under a name carrying the part separator refuses: {err}"
+    );
+    assert!(
+        err.contains("the decision document has the wrong fields (missing run; unexpected a; b)"),
+        "the refusal names the missing field and prints the name whole across the part separator in the unexpected part: {err}"
+    );
+}
+
+#[test]
+fn test_a_decision_carrying_a_further_field_under_a_name_carrying_the_part_separator_before_the_words_of_a_missing_field_is_refused_with_the_unexpected_part_alone_reading_as_two_parts(
+) {
+    let dir = scratch("fake-missing-part");
+    let doc = decision().replace(
+        "\"run\": \"synthetic-run\"}",
+        "\"run\": \"synthetic-run\", \"x; missing run\": \"high\"}",
+    );
+    let (code, err) = assemble_with_decision_text(&dir, &doc);
+    assert_eq!(
+        code, 1,
+        "a decision carrying a further field under a name carrying the part separator before the words of a missing field refuses: {err}"
+    );
+    assert!(
+        err.contains("the decision document has the wrong fields (unexpected x; missing run)"),
+        "the refusal carries the unexpected part alone reading as two parts: {err}"
+    );
+}
+
+#[test]
+fn test_a_decision_carrying_two_further_fields_one_under_a_name_carrying_the_list_separator_is_refused_with_the_two_fields_reading_as_three_names(
+) {
+    let dir = scratch("list-separator-beside-name");
+    let doc = decision().replace(
+        "\"run\": \"synthetic-run\"}",
+        "\"run\": \"synthetic-run\", \"zeal\": \"high\", \"zeal, confidence\": \"high\"}",
+    );
+    let (code, err) = assemble_with_decision_text(&dir, &doc);
+    assert_eq!(
+        code, 1,
+        "a decision carrying two further fields, one under a name carrying the list separator, refuses: {err}"
+    );
+    assert!(
+        err.contains(
+            "the decision document has the wrong fields (unexpected zeal, zeal, confidence)"
+        ),
+        "the refusal reads the two fields as three names: {err}"
+    );
+}
+
+#[test]
+fn test_a_catchledger_pack_carrying_a_field_under_a_name_carrying_the_list_separator_is_refused_with_the_name_printed_across_it(
+) {
+    let dir = scratch("list-separator-window");
+    let pack = cl_pack().replace(
+        "\"format\": \"catchledger-pack/1\"",
+        "\"zeal, confidence\": \"high\", \"format\": \"catchledger-pack/1\"",
+    );
+    let (code, err) = assemble_with_pack_text(&dir, &pack);
+    assert_eq!(
+        code, 1,
+        "a catchledger pack carrying a field under a name carrying the list separator refuses: {err}"
+    );
+    assert!(
+        err.contains("the catchledger pack has the wrong fields (unexpected zeal, confidence)"),
+        "the refusal prints the name across the list separator it carries: {err}"
+    );
+}
