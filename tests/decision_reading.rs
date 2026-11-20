@@ -241,3 +241,35 @@ fn test_a_decision_with_an_unknown_recommendation_is_refused_in_its_standing_wor
         "the refusal keeps the standing recommendation wording: {err}"
     );
 }
+
+#[test]
+fn test_a_decision_missing_one_field_and_carrying_one_unexpected_field_is_refused_naming_both_parts(
+) {
+    let dir = scratch("combined-plain");
+    let doc = decision().replace("\"run\": \"synthetic-run\"}", "\"zeal\": \"high\"}");
+    let (code, err) = assemble_with_decision_text(&dir, &doc);
+    assert_eq!(
+        code, 1,
+        "a decision missing one field and carrying one unexpected field refuses: {err}"
+    );
+    assert!(
+        err.contains("the decision document has the wrong fields (missing run; unexpected zeal)"),
+        "the refusal names both parts in the one sentence: {err}"
+    );
+}
+
+#[test]
+fn test_a_decision_missing_two_fields_and_carrying_two_unexpected_fields_is_refused_with_each_part_sorted(
+) {
+    let dir = scratch("combined-sorted");
+    let doc = r#"{"recommendation": "keep", "rationale": "synthetic grounds", "model": "jev-1.13.0", "run": "synthetic-run", "zeal": "high", "confidence": "high"}"#;
+    let (code, err) = assemble_with_decision_text(&dir, doc);
+    assert_eq!(
+        code, 1,
+        "a decision missing two fields and carrying two unexpected fields refuses: {err}"
+    );
+    assert!(
+        err.contains("the decision document has the wrong fields (missing check, format; unexpected confidence, zeal)"),
+        "the refusal names each part with its names in sorted order: {err}"
+    );
+}
