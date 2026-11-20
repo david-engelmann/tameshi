@@ -21,11 +21,11 @@ This ruling is unsigned. A human signs it outside the tool before the pull reque
 | Total cost USD | 0.12 |
 | Cost per catch USD | 0.04 |
 | Canary scored defects | 30 |
-| Canary caught | 24 |
-| Canary waved through | 4 |
-| Canary gate broken | 2 |
-| Canary not applicable | 2 |
-| Canary catch rate | 0.8 |
+| Canary caught | 30 |
+| Canary waved through | 0 |
+| Canary gate broken | 0 |
+| Canary not applicable | 0 |
+| Canary catch rate | 1.0 |
 | Canary defects held | 30 |
 | Canary defects required | 30 |
 | CI history days held | 14 |
