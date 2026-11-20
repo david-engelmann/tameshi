@@ -35,38 +35,7 @@ pub const RECOMMENDATION_FIELDS: [&str; 4] = ["recommendation", "rationale", "mo
 /// handing back the check it names and the recommendation
 /// record the pack carries for it.
 pub fn read_decision(document: &JsonValue) -> Result<(String, JsonValue)> {
-    let fields = match document.as_object() {
-        Some(fields) => fields,
-        None => {
-            return Err(TameshiError::refusal(
-                "the decision document has the wrong fields (missing check, format, model, rationale, recommendation, run)",
-            ))
-        }
-    };
-    let standing: Vec<&str> = fields.iter().map(|(name, _)| name.as_str()).collect();
-    let missing: Vec<&str> = DECISION_FIELDS
-        .iter()
-        .copied()
-        .filter(|field| !standing.contains(field))
-        .collect();
-    let unexpected: Vec<&str> = standing
-        .iter()
-        .copied()
-        .filter(|name| !DECISION_FIELDS.contains(name))
-        .collect();
-    if !missing.is_empty() || !unexpected.is_empty() {
-        let mut details: Vec<String> = Vec::new();
-        if !missing.is_empty() {
-            details.push(format!("missing {}", missing.join(", ")));
-        }
-        if !unexpected.is_empty() {
-            details.push(format!("unexpected {}", unexpected.join(", ")));
-        }
-        return Err(TameshiError::refusal(format!(
-            "the decision document has the wrong fields ({})",
-            details.join("; ")
-        )));
-    }
+    ingest::require_exact_fields(document, &DECISION_FIELDS, "decision document")?;
     if document.get("format").and_then(|value| value.as_text()) != Some(DECISION_FORMAT) {
         return Err(TameshiError::refusal(
             "the decision document carries the wrong format name",
