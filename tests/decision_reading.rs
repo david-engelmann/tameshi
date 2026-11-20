@@ -273,3 +273,103 @@ fn test_a_decision_missing_two_fields_and_carrying_two_unexpected_fields_is_refu
         "the refusal names each part with its names in sorted order: {err}"
     );
 }
+
+/// Assemble over the catchledger pack text the caller
+/// supplies beside the sound canary document and the
+/// sound decision document, handing back the exit
+/// standing and the words the run spoke.
+fn assemble_with_pack_text(dir: &Path, text: &str) -> (i32, String) {
+    write(dir, "cl-pack.json", text);
+    write(dir, "canary.json", &canary());
+    write(dir, "decision.json", &decision());
+    run(
+        dir,
+        &[
+            "assemble",
+            "--catchledger",
+            "cl-pack.json",
+            "--canaryfield",
+            "canary.json",
+            "--decision",
+            "decision.json",
+            "--packs-dir",
+            "packs",
+        ],
+    )
+}
+
+#[test]
+fn test_a_decision_carrying_a_further_field_under_the_empty_name_is_refused_with_the_placeholder_printed_in_its_place(
+) {
+    let dir = scratch("empty-name-alone");
+    let doc = decision().replace(
+        "\"run\": \"synthetic-run\"}",
+        "\"run\": \"synthetic-run\", \"\": \"high\"}",
+    );
+    let (code, err) = assemble_with_decision_text(&dir, &doc);
+    assert_eq!(
+        code, 1,
+        "a decision carrying a further field under the empty name refuses: {err}"
+    );
+    assert!(
+        err.contains("the decision document has the wrong fields (unexpected empty name)"),
+        "the refusal prints the placeholder in the place of the empty name: {err}"
+    );
+}
+
+#[test]
+fn test_a_decision_missing_one_field_and_carrying_the_empty_name_beside_a_named_field_is_refused_with_the_placeholder_at_the_head_of_the_unexpected_part(
+) {
+    let dir = scratch("empty-name-combined");
+    let doc = decision().replace(
+        "\"run\": \"synthetic-run\"}",
+        "\"\": \"high\", \"confidence\": \"high\"}",
+    );
+    let (code, err) = assemble_with_decision_text(&dir, &doc);
+    assert_eq!(
+        code, 1,
+        "a decision missing one field and carrying the empty name beside a named field refuses: {err}"
+    );
+    assert!(
+        err.contains("the decision document has the wrong fields (missing run; unexpected empty name, confidence)"),
+        "the refusal names the missing field and carries the placeholder at the head of the unexpected part: {err}"
+    );
+}
+
+#[test]
+fn test_a_catchledger_pack_carrying_a_field_under_the_empty_name_is_refused_with_the_placeholder_printed_in_its_place(
+) {
+    let dir = scratch("empty-name-window");
+    let pack = cl_pack().replace(
+        "\"format\": \"catchledger-pack/1\"",
+        "\"\": \"high\", \"format\": \"catchledger-pack/1\"",
+    );
+    let (code, err) = assemble_with_pack_text(&dir, &pack);
+    assert_eq!(
+        code, 1,
+        "a catchledger pack carrying a field under the empty name refuses: {err}"
+    );
+    assert!(
+        err.contains("the catchledger pack has the wrong fields (unexpected empty name)"),
+        "the refusal prints the placeholder in the place of the empty name: {err}"
+    );
+}
+
+#[test]
+fn test_a_decision_carrying_a_further_field_under_a_name_carrying_a_space_is_refused_with_the_name_printed_as_it_stands(
+) {
+    let dir = scratch("space-name-fence");
+    let doc = decision().replace(
+        "\"run\": \"synthetic-run\"}",
+        "\"run\": \"synthetic-run\", \"publisher note\": \"high\"}",
+    );
+    let (code, err) = assemble_with_decision_text(&dir, &doc);
+    assert_eq!(
+        code, 1,
+        "a decision carrying a further field under a name carrying a space refuses: {err}"
+    );
+    assert!(
+        err.contains("the decision document has the wrong fields (unexpected publisher note)"),
+        "the refusal prints the name as it stands: {err}"
+    );
+}
