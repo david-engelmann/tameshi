@@ -486,3 +486,117 @@ fn test_a_catchledger_pack_carrying_a_field_under_a_name_carrying_the_list_separ
         "the refusal prints the name across the list separator it carries: {err}"
     );
 }
+
+#[test]
+fn test_a_decision_carrying_a_further_field_under_a_name_ending_in_a_closing_parenthesis_is_refused_with_the_frame_its_closing_mark_doubled(
+) {
+    let dir = scratch("closing-parenthesis-alone");
+    let doc = decision().replace(
+        "\"run\": \"synthetic-run\"}",
+        "\"run\": \"synthetic-run\", \"zeal)\": \"high\"}",
+    );
+    let (code, err) = assemble_with_decision_text(&dir, &doc);
+    assert_eq!(
+        code, 1,
+        "a decision carrying a further field under a name ending in a closing parenthesis refuses: {err}"
+    );
+    assert!(
+        err.contains("the decision document has the wrong fields (unexpected zeal))"),
+        "the refusal prints the name as it stands and the frame its closing mark stands doubled: {err}"
+    );
+}
+
+#[test]
+fn test_a_decision_carrying_a_further_field_under_a_name_carrying_an_opening_parenthesis_is_refused_with_a_further_opening_standing_inside_the_frame(
+) {
+    let dir = scratch("opening-parenthesis-alone");
+    let doc = decision().replace(
+        "\"run\": \"synthetic-run\"}",
+        "\"run\": \"synthetic-run\", \"a(b\": \"high\"}",
+    );
+    let (code, err) = assemble_with_decision_text(&dir, &doc);
+    assert_eq!(
+        code, 1,
+        "a decision carrying a further field under a name carrying an opening parenthesis refuses: {err}"
+    );
+    assert!(
+        err.contains("the decision document has the wrong fields (unexpected a(b)"),
+        "the refusal prints the name across the opening parenthesis it carries: {err}"
+    );
+}
+
+#[test]
+fn test_a_decision_carrying_a_further_field_under_a_name_faking_a_missing_part_is_refused_with_the_sentence_reading_as_a_refusal_followed_by_a_second_parenthetical(
+) {
+    let dir = scratch("frame-faking-name");
+    let doc = decision().replace(
+        "\"run\": \"synthetic-run\"}",
+        "\"run\": \"synthetic-run\", \"a) (missing b\": \"high\"}",
+    );
+    let (code, err) = assemble_with_decision_text(&dir, &doc);
+    assert_eq!(
+        code, 1,
+        "a decision carrying a further field under a name faking a missing part refuses: {err}"
+    );
+    assert!(
+        err.contains("the decision document has the wrong fields (unexpected a) (missing b)"),
+        "the refusal reads as a whole refusal followed by a second parenthetical: {err}"
+    );
+}
+
+#[test]
+fn test_a_decision_missing_one_field_and_carrying_a_further_field_under_a_name_faking_a_missing_part_is_refused_with_the_second_parenthetical_naming_a_field_that_is_not_the_missing_field(
+) {
+    let dir = scratch("frame-faking-combined");
+    let doc = decision().replace(
+        "\"run\": \"synthetic-run\"}",
+        "\"a) (missing b\": \"high\"}",
+    );
+    let (code, err) = assemble_with_decision_text(&dir, &doc);
+    assert_eq!(
+        code, 1,
+        "a decision missing one field and carrying a further field under a name faking a missing part refuses: {err}"
+    );
+    assert!(
+        err.contains("the decision document has the wrong fields (missing run; unexpected a) (missing b)"),
+        "the refusal names the missing field and the second parenthetical names a field that is not missing: {err}"
+    );
+}
+
+#[test]
+fn test_a_decision_carrying_two_further_fields_one_under_a_name_carrying_a_closing_parenthesis_is_refused_with_the_fake_close_standing_inside_the_printed_list_beside_the_plain_name(
+) {
+    let dir = scratch("closing-parenthesis-beside-name");
+    let doc = decision().replace(
+        "\"run\": \"synthetic-run\"}",
+        "\"run\": \"synthetic-run\", \"a)b\": \"high\", \"zeal\": \"high\"}",
+    );
+    let (code, err) = assemble_with_decision_text(&dir, &doc);
+    assert_eq!(
+        code, 1,
+        "a decision carrying two further fields, one under a name carrying a closing parenthesis, refuses: {err}"
+    );
+    assert!(
+        err.contains("the decision document has the wrong fields (unexpected a)b, zeal)"),
+        "the refusal prints the fake close inside the list beside the plain name: {err}"
+    );
+}
+
+#[test]
+fn test_a_catchledger_pack_carrying_a_field_under_a_name_carrying_a_closing_parenthesis_is_refused_with_the_name_printed_across_it(
+) {
+    let dir = scratch("closing-parenthesis-window");
+    let pack = cl_pack().replace(
+        "\"format\": \"catchledger-pack/1\"",
+        "\"a)b\": \"high\", \"format\": \"catchledger-pack/1\"",
+    );
+    let (code, err) = assemble_with_pack_text(&dir, &pack);
+    assert_eq!(
+        code, 1,
+        "a catchledger pack carrying a field under a name carrying a closing parenthesis refuses: {err}"
+    );
+    assert!(
+        err.contains("the catchledger pack has the wrong fields (unexpected a)b)"),
+        "the refusal prints the name across the closing parenthesis it carries: {err}"
+    );
+}
