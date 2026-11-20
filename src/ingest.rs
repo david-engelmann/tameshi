@@ -94,7 +94,11 @@ fn wrong_fields(label: &str, mut missing: Vec<&str>, mut unexpected: Vec<&str>) 
         details.push(format!("missing {}", missing.join(", ")));
     }
     if !unexpected.is_empty() {
-        details.push(format!("unexpected {}", unexpected.join(", ")));
+        let printed: Vec<&str> = unexpected
+            .iter()
+            .map(|name| if name.is_empty() { "empty name" } else { name })
+            .collect();
+        details.push(format!("unexpected {}", printed.join(", ")));
     }
     TameshiError::refusal(format!(
         "the {label} has the wrong fields ({})",
