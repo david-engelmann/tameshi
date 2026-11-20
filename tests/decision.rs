@@ -490,3 +490,251 @@ fn test_a_kill_ruling_below_the_floor_refuses_on_the_floor() {
         "{err}"
     );
 }
+
+#[test]
+fn test_a_decision_with_a_recommendation_carrying_a_line_feed_in_its_body_is_refused_with_the_sentence_standing_on_two_printed_lines(
+) {
+    let dir = scratch("recommendation-line-feed-in-body");
+    fixture(&dir, 1..=14);
+    write(
+        &dir,
+        "decision.json",
+        &decision("unit checks", "keep\\nkill"),
+    );
+    let (code, err) = run(
+        &dir,
+        &[
+            "assemble",
+            "--catchledger",
+            "cl-pack.json",
+            "--canaryfield",
+            "canary.json",
+            "--decision",
+            "decision.json",
+            "--packs-dir",
+            "packs",
+        ],
+    );
+    assert_eq!(code, 1);
+    assert!(
+        err.contains("the decision document carries an unknown recommendation (keep\nkill)"),
+        "{err}"
+    );
+}
+
+#[test]
+fn test_a_decision_with_a_recommendation_carrying_a_line_feed_at_its_tail_is_refused_with_the_closing_mark_alone_on_the_second_printed_line(
+) {
+    let dir = scratch("recommendation-line-feed-at-tail");
+    fixture(&dir, 1..=14);
+    write(&dir, "decision.json", &decision("unit checks", "keep\\n"));
+    let (code, err) = run(
+        &dir,
+        &[
+            "assemble",
+            "--catchledger",
+            "cl-pack.json",
+            "--canaryfield",
+            "canary.json",
+            "--decision",
+            "decision.json",
+            "--packs-dir",
+            "packs",
+        ],
+    );
+    assert_eq!(code, 1);
+    assert!(
+        err.contains("the decision document carries an unknown recommendation (keep\n)"),
+        "{err}"
+    );
+}
+
+#[test]
+fn test_a_decision_with_a_recommendation_carrying_a_carriage_return_in_its_body_is_refused_with_the_sentence_standing_whole_in_its_bytes_on_the_one_printed_line(
+) {
+    let dir = scratch("recommendation-carriage-return-in-body");
+    fixture(&dir, 1..=14);
+    write(&dir, "decision.json", &decision("unit checks", "a\\rb"));
+    let (code, err) = run(
+        &dir,
+        &[
+            "assemble",
+            "--catchledger",
+            "cl-pack.json",
+            "--canaryfield",
+            "canary.json",
+            "--decision",
+            "decision.json",
+            "--packs-dir",
+            "packs",
+        ],
+    );
+    assert_eq!(code, 1);
+    assert!(
+        err.contains("the decision document carries an unknown recommendation (a\rb)"),
+        "{err}"
+    );
+}
+
+#[test]
+fn test_a_decision_with_a_recommendation_carrying_a_carriage_return_and_a_line_feed_standing_together_is_refused_with_the_sentence_standing_on_two_printed_lines(
+) {
+    let dir = scratch("recommendation-pair-in-body");
+    fixture(&dir, 1..=14);
+    write(&dir, "decision.json", &decision("unit checks", "a\\r\\nb"));
+    let (code, err) = run(
+        &dir,
+        &[
+            "assemble",
+            "--catchledger",
+            "cl-pack.json",
+            "--canaryfield",
+            "canary.json",
+            "--decision",
+            "decision.json",
+            "--packs-dir",
+            "packs",
+        ],
+    );
+    assert_eq!(code, 1);
+    assert!(
+        err.contains("the decision document carries an unknown recommendation (a\r\nb)"),
+        "{err}"
+    );
+}
+
+#[test]
+fn test_a_decision_with_a_recommendation_standing_as_exactly_the_closing_mark_is_refused_with_the_frame_its_closing_mark_doubled(
+) {
+    let dir = scratch("recommendation-standing-as-closing-mark");
+    fixture(&dir, 1..=14);
+    write(&dir, "decision.json", &decision("unit checks", ")"));
+    let (code, err) = run(
+        &dir,
+        &[
+            "assemble",
+            "--catchledger",
+            "cl-pack.json",
+            "--canaryfield",
+            "canary.json",
+            "--decision",
+            "decision.json",
+            "--packs-dir",
+            "packs",
+        ],
+    );
+    assert_eq!(code, 1);
+    assert!(
+        err.contains("the decision document carries an unknown recommendation ())"),
+        "{err}"
+    );
+}
+
+#[test]
+fn test_a_decision_with_a_recommendation_carrying_a_closing_mark_and_a_line_feed_is_refused_with_its_first_printed_line_reading_as_a_complete_refusal(
+) {
+    let dir = scratch("recommendation-mark-and-break");
+    fixture(&dir, 1..=14);
+    write(&dir, "decision.json", &decision("unit checks", "a)\\nb"));
+    let (code, err) = run(
+        &dir,
+        &[
+            "assemble",
+            "--catchledger",
+            "cl-pack.json",
+            "--canaryfield",
+            "canary.json",
+            "--decision",
+            "decision.json",
+            "--packs-dir",
+            "packs",
+        ],
+    );
+    assert_eq!(code, 1);
+    assert!(
+        err.contains("the decision document carries an unknown recommendation (a)\nb)"),
+        "{err}"
+    );
+}
+
+#[test]
+fn test_a_decision_naming_a_check_carrying_a_closing_mark_and_a_word_is_refused_with_the_sentence_standing_as_two_parentheticals(
+) {
+    let dir = scratch("check-name-closing-mark-compound");
+    fixture(&dir, 1..=14);
+    write(&dir, "decision.json", &decision("a) (missing b", "kill"));
+    let (code, err) = run(
+        &dir,
+        &[
+            "assemble",
+            "--catchledger",
+            "cl-pack.json",
+            "--canaryfield",
+            "canary.json",
+            "--decision",
+            "decision.json",
+            "--packs-dir",
+            "packs",
+        ],
+    );
+    assert_eq!(code, 1);
+    assert!(
+        err.contains(
+            "the decision document names a check the run does not assemble (a) (missing b)"
+        ),
+        "{err}"
+    );
+}
+
+#[test]
+fn test_a_decision_naming_a_check_carrying_a_line_feed_is_refused_at_the_name_reading() {
+    let dir = scratch("check-name-carrying-line-feed");
+    fixture(&dir, 1..=14);
+    write(&dir, "decision.json", &decision("a\\nb", "kill"));
+    let (code, err) = run(
+        &dir,
+        &[
+            "assemble",
+            "--catchledger",
+            "cl-pack.json",
+            "--canaryfield",
+            "canary.json",
+            "--decision",
+            "decision.json",
+            "--packs-dir",
+            "packs",
+        ],
+    );
+    assert_eq!(code, 1);
+    assert!(
+        err.contains("the decision check name must not carry a newline"),
+        "{err}"
+    );
+}
+
+#[test]
+fn test_a_decision_with_a_recommendation_standing_as_exactly_a_line_feed_is_refused_at_the_text_reading(
+) {
+    let dir = scratch("recommendation-standing-as-line-feed");
+    fixture(&dir, 1..=14);
+    write(&dir, "decision.json", &decision("unit checks", "\\n"));
+    let (code, err) = run(
+        &dir,
+        &[
+            "assemble",
+            "--catchledger",
+            "cl-pack.json",
+            "--canaryfield",
+            "canary.json",
+            "--decision",
+            "decision.json",
+            "--packs-dir",
+            "packs",
+        ],
+    );
+    assert_eq!(code, 1);
+    assert!(
+        err.contains("the decision recommendation must be nonempty text"),
+        "{err}"
+    );
+}
