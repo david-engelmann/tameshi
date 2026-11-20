@@ -35,6 +35,16 @@ const SOURCES_FIELDS: [&str; 4] = [
     "blindgate_unmatched_trace_count",
 ];
 
+const FLOOR_FIELDS: [&str; 7] = [
+    "required_canary_defects",
+    "required_ci_history_days",
+    "canary_defects",
+    "ci_history_days",
+    "canary_shortfall",
+    "ci_history_shortfall",
+    "meets_floor",
+];
+
 /// The slug a check name gives its ruling files.
 pub fn ruling_slug(check: &str) -> String {
     slugify_check(check)
@@ -92,6 +102,16 @@ fn validate_blindness_traces(pack: &JsonValue) -> Result<()> {
 fn validate_sources(pack: &JsonValue) -> Result<()> {
     let sources = pack.get("sources").unwrap_or(&JsonValue::Null);
     ingest::require_exact_fields(sources, &SOURCES_FIELDS, "evidence pack sources record")?;
+    Ok(())
+}
+
+/// Read the pack's floor record under the exact fields
+/// discipline, the record standing in exactly the seven
+/// fields the assembly constructs, spoken under the label
+/// evidence pack floor accounting.
+fn validate_floor(pack: &JsonValue) -> Result<()> {
+    let floor = pack.get("floor").unwrap_or(&JsonValue::Null);
+    ingest::require_exact_fields(floor, &FLOOR_FIELDS, "evidence pack floor accounting")?;
     Ok(())
 }
 
@@ -181,15 +201,7 @@ fn validate_pack(pack: &JsonValue) -> Result<()> {
     }
     packs::validate_canary_performance(pack.get("canary_performance").unwrap_or(&JsonValue::Null))?;
     validate_blindness_traces(pack)?;
-    if !pack
-        .get("floor")
-        .map(|item| item.is_object())
-        .unwrap_or(false)
-    {
-        return Err(TameshiError::refusal(
-            "the evidence pack floor accounting must be an object",
-        ));
-    }
+    validate_floor(pack)?;
     if !matches!(pack.get("below_floor"), Some(JsonValue::Bool(_))) {
         return Err(TameshiError::refusal(
             "the evidence pack below floor mark must be a boolean",
