@@ -600,3 +600,174 @@ fn test_a_catchledger_pack_carrying_a_field_under_a_name_carrying_a_closing_pare
         "the refusal prints the name across the closing parenthesis it carries: {err}"
     );
 }
+
+#[test]
+fn test_a_decision_carrying_a_further_field_under_a_name_carrying_a_line_feed_is_refused_with_the_sentence_standing_on_two_printed_lines(
+) {
+    let dir = scratch("line-feed-in-name");
+    let doc = decision().replace(
+        "\"run\": \"synthetic-run\"}",
+        "\"run\": \"synthetic-run\", \"a\\nb\": \"high\"}",
+    );
+    let (code, err) = assemble_with_decision_text(&dir, &doc);
+    assert_eq!(
+        code, 1,
+        "a decision carrying a further field under a name carrying a line feed refuses: {err}"
+    );
+    assert!(
+        err.contains("the decision document has the wrong fields (unexpected a\nb)"),
+        "the refusal prints the name across the line feed it carries and the sentence stands on two printed lines: {err}"
+    );
+}
+
+#[test]
+fn test_a_decision_carrying_a_further_field_under_a_name_standing_as_exactly_a_line_feed_is_refused_with_the_part_reading_as_carrying_no_name_on_either_printed_line(
+) {
+    let dir = scratch("name-standing-as-line-feed");
+    let doc = decision().replace(
+        "\"run\": \"synthetic-run\"}",
+        "\"run\": \"synthetic-run\", \"\\n\": \"high\"}",
+    );
+    let (code, err) = assemble_with_decision_text(&dir, &doc);
+    assert_eq!(
+        code, 1,
+        "a decision carrying a further field under a name standing as exactly a line feed refuses: {err}"
+    );
+    assert!(
+        err.contains("the decision document has the wrong fields (unexpected \n)"),
+        "the refusal prints the break alone and the part reads as carrying no name on either printed line: {err}"
+    );
+}
+
+#[test]
+fn test_a_decision_carrying_a_further_field_under_a_name_carrying_a_carriage_return_is_refused_with_the_sentence_standing_whole_in_its_bytes_on_the_one_printed_line(
+) {
+    let dir = scratch("carriage-return-in-name");
+    let doc = decision().replace(
+        "\"run\": \"synthetic-run\"}",
+        "\"run\": \"synthetic-run\", \"a\\rb\": \"high\"}",
+    );
+    let (code, err) = assemble_with_decision_text(&dir, &doc);
+    assert_eq!(
+        code, 1,
+        "a decision carrying a further field under a name carrying a carriage return refuses: {err}"
+    );
+    assert!(
+        err.contains("the decision document has the wrong fields (unexpected a\rb)"),
+        "the refusal prints the name across the carriage return it carries and the sentence stands whole in its bytes on the one printed line: {err}"
+    );
+}
+
+#[test]
+fn test_a_decision_carrying_a_further_field_under_a_name_carrying_a_carriage_return_and_a_line_feed_standing_together_is_refused_with_the_sentence_standing_on_two_printed_lines(
+) {
+    let dir = scratch("carriage-return-and-line-feed-in-name");
+    let doc = decision().replace(
+        "\"run\": \"synthetic-run\"}",
+        "\"run\": \"synthetic-run\", \"a\\r\\nb\": \"high\"}",
+    );
+    let (code, err) = assemble_with_decision_text(&dir, &doc);
+    assert_eq!(
+        code, 1,
+        "a decision carrying a further field under a name carrying a carriage return and a line feed refuses: {err}"
+    );
+    assert!(
+        err.contains("the decision document has the wrong fields (unexpected a\r\nb)"),
+        "the refusal prints the name across the pair it carries and the sentence stands on two printed lines: {err}"
+    );
+}
+
+#[test]
+fn test_a_decision_carrying_two_further_fields_one_under_a_name_carrying_a_line_feed_is_refused_with_the_printed_list_standing_split_across_the_break(
+) {
+    let dir = scratch("line-feed-beside-standing-name");
+    let doc = decision().replace(
+        "\"run\": \"synthetic-run\"}",
+        "\"run\": \"synthetic-run\", \"a\\nb\": \"high\", \"zeal\": \"high\"}",
+    );
+    let (code, err) = assemble_with_decision_text(&dir, &doc);
+    assert_eq!(
+        code, 1,
+        "a decision carrying two further fields, one under a name carrying a line feed, refuses: {err}"
+    );
+    assert!(
+        err.contains("the decision document has the wrong fields (unexpected a\nb, zeal)"),
+        "the refusal prints the list split across the break with the standing name standing after the residue in the sorted order: {err}"
+    );
+}
+
+#[test]
+fn test_a_catchledger_pack_carrying_a_field_under_a_name_carrying_a_line_feed_is_refused_with_the_sentence_standing_on_two_printed_lines(
+) {
+    let dir = scratch("line-feed-window");
+    let pack = cl_pack().replace(
+        "\"format\": \"catchledger-pack/1\"",
+        "\"a\\nb\": \"high\", \"format\": \"catchledger-pack/1\"",
+    );
+    let (code, err) = assemble_with_pack_text(&dir, &pack);
+    assert_eq!(
+        code, 1,
+        "a catchledger pack carrying a field under a name carrying a line feed refuses: {err}"
+    );
+    assert!(
+        err.contains("the catchledger pack has the wrong fields (unexpected a\nb)"),
+        "the refusal prints the name across the line feed it carries and the sentence stands on two printed lines: {err}"
+    );
+}
+
+#[test]
+fn test_a_decision_carrying_a_key_more_than_once_under_a_key_carrying_a_line_feed_is_refused_with_the_sentence_standing_on_two_printed_lines(
+) {
+    let dir = scratch("repeated-key-carrying-line-feed");
+    let doc = decision().replace(
+        "\"run\": \"synthetic-run\"}",
+        "\"a\\nb\": \"high\", \"a\\nb\": \"high\"}",
+    );
+    let (code, err) = assemble_with_decision_text(&dir, &doc);
+    assert_eq!(
+        code, 1,
+        "a decision carrying a key more than once under a key carrying a line feed refuses: {err}"
+    );
+    assert!(
+        err.contains("the decision document carries the key a\nb more than once"),
+        "the refusal prints the key across the line feed it carries and the sentence stands on two printed lines: {err}"
+    );
+}
+
+#[test]
+fn test_a_decision_carrying_a_key_more_than_once_under_a_key_carrying_the_part_separator_is_refused_with_the_key_printed_exactly_and_nothing_misstated(
+) {
+    let dir = scratch("repeated-key-carrying-part-separator");
+    let doc = decision().replace(
+        "\"run\": \"synthetic-run\"}",
+        "\"a; b\": \"high\", \"a; b\": \"high\"}",
+    );
+    let (code, err) = assemble_with_decision_text(&dir, &doc);
+    assert_eq!(
+        code, 1,
+        "a decision carrying a key more than once under a key carrying the part separator refuses: {err}"
+    );
+    assert!(
+        err.contains("the decision document carries the key a; b more than once"),
+        "the refusal prints the key exactly across the part separator it carries in a sentence carrying no list and no parts and no frame: {err}"
+    );
+}
+
+#[test]
+fn test_a_decision_carrying_a_key_more_than_once_under_a_key_standing_as_exactly_a_line_feed_is_refused_with_the_sentence_reading_as_naming_no_key(
+) {
+    let dir = scratch("repeated-key-standing-as-line-feed");
+    let doc = decision().replace(
+        "\"run\": \"synthetic-run\"}",
+        "\"\\n\": \"high\", \"\\n\": \"high\"}",
+    );
+    let (code, err) = assemble_with_decision_text(&dir, &doc);
+    assert_eq!(
+        code, 1,
+        "a decision carrying a key more than once under a key standing as exactly a line feed refuses: {err}"
+    );
+    assert!(
+        err.contains("the decision document carries the key \n more than once"),
+        "the refusal prints the break alone and the sentence reads as naming no key on its first printed line: {err}"
+    );
+}
