@@ -9,12 +9,12 @@
     }
   ],
   "canary_performance": {
-    "catch_rate": 0.8,
+    "catch_rate": 1.0,
     "counts": {
-      "caught": 24,
-      "gate-broken": 2,
-      "not-applicable": 2,
-      "waved-through": 4
+      "caught": 30,
+      "gate-broken": 0,
+      "not-applicable": 0,
+      "waved-through": 0
     },
     "gate": "unit checks",
     "results": [
@@ -240,7 +240,7 @@
         "planted_files": [
           "src/synthetic.py"
         ],
-        "result": "waved-through",
+        "result": "caught",
         "seed": "seed-24"
       },
       {
@@ -249,7 +249,7 @@
         "planted_files": [
           "src/synthetic.py"
         ],
-        "result": "waved-through",
+        "result": "caught",
         "seed": "seed-25"
       },
       {
@@ -258,7 +258,7 @@
         "planted_files": [
           "src/synthetic.py"
         ],
-        "result": "waved-through",
+        "result": "caught",
         "seed": "seed-26"
       },
       {
@@ -267,7 +267,7 @@
         "planted_files": [
           "src/synthetic.py"
         ],
-        "result": "waved-through",
+        "result": "caught",
         "seed": "seed-27"
       },
       {
@@ -276,7 +276,7 @@
         "planted_files": [
           "src/synthetic.py"
         ],
-        "result": "gate-broken",
+        "result": "caught",
         "seed": "seed-28"
       },
       {
@@ -285,26 +285,8 @@
         "planted_files": [
           "src/synthetic.py"
         ],
-        "result": "gate-broken",
+        "result": "caught",
         "seed": "seed-29"
-      },
-      {
-        "defect_class": "synthetic class",
-        "name": "synthetic defect 30",
-        "planted_files": [
-          "src/synthetic.py"
-        ],
-        "result": "not-applicable",
-        "seed": "seed-30"
-      },
-      {
-        "defect_class": "synthetic class",
-        "name": "synthetic defect 31",
-        "planted_files": [
-          "src/synthetic.py"
-        ],
-        "result": "not-applicable",
-        "seed": "seed-31"
       }
     ],
     "scored": 30
