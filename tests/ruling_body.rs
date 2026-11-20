@@ -264,3 +264,342 @@ fn test_a_tampered_record_is_refused_before_the_body_is_read() {
         "the record reading runs first and refuses in its own words: {err}"
     );
 }
+
+/// The decision document the pins of slice 22 assemble
+/// beside the catchledger and canaryfield fixtures, in the
+/// words the decision pins of tests/decision.rs use.
+fn recommendation_decision() -> String {
+    r#"{"format": "tameshi-decision/1", "check": "unit checks", "recommendation": "keep", "rationale": "synthetic grounds", "model": "jev-1.13.0", "run": "synthetic-run"}"#.to_string()
+}
+
+/// Assemble the pack standing above the floor with its
+/// decision, so the pack stands in the second format
+/// carrying its recommendation record, and read it back as
+/// a document.
+fn pack_with_recommendation(dir: &Path) -> JsonValue {
+    write(dir, "cl-pack.json", &cl_pack(1..=14));
+    write(dir, "canary.json", &canary());
+    write(dir, "decision.json", &recommendation_decision());
+    let (code, err) = run(
+        dir,
+        &[
+            "assemble",
+            "--catchledger",
+            "cl-pack.json",
+            "--canaryfield",
+            "canary.json",
+            "--decision",
+            "decision.json",
+            "--packs-dir",
+            "packs",
+        ],
+    );
+    assert_eq!(code, 0, "the assembly stands: {err}");
+    let text =
+        std::fs::read_to_string(dir.join("packs/001-unit-checks.json")).expect("the pack reads");
+    parse(&text).expect("the pack parses")
+}
+
+/// The document with one text member standing in the place
+/// of the member it carries, every other member as it
+/// stands.
+fn with_text(document: &JsonValue, field: &str, value: &str) -> JsonValue {
+    let pairs: Vec<(String, JsonValue)> = document
+        .as_object()
+        .expect("the document stands as an object")
+        .iter()
+        .map(|(key, held)| {
+            if key == field {
+                (key.clone(), JsonValue::Text(value.to_string()))
+            } else {
+                (key.clone(), held.clone())
+            }
+        })
+        .collect();
+    JsonValue::Object(pairs)
+}
+
+/// The pack with one text member of its recommendation
+/// record standing in the place of the member it carries.
+fn with_record_text(pack: &JsonValue, field: &str, value: &str) -> JsonValue {
+    let record = pack
+        .get("recommendation")
+        .cloned()
+        .unwrap_or(JsonValue::Null);
+    let shaped = with_text(&record, field, value);
+    let pairs: Vec<(String, JsonValue)> = pack
+        .as_object()
+        .expect("the pack stands as an object")
+        .iter()
+        .map(|(key, held)| {
+            if key == "recommendation" {
+                (key.clone(), shaped.clone())
+            } else {
+                (key.clone(), held.clone())
+            }
+        })
+        .collect();
+    JsonValue::Object(pairs)
+}
+
+/// Drive the rule door over the pack, returning the exit
+/// standing, the refusal text, and the emitted body read
+/// back from the written artifact where the door wrote
+/// one.
+fn rule_door(dir: &Path, pack: &JsonValue, tag: &str) -> (i32, String, Option<String>) {
+    write(dir, "pack.json", &render_json(pack));
+    let out = format!("out-{tag}");
+    std::fs::create_dir_all(dir.join(&out)).expect("the out standing stands");
+    let (code, err) = run(
+        dir,
+        &[
+            "rule",
+            "--pack",
+            "pack.json",
+            "--ruling",
+            "keep",
+            "--out",
+            &out,
+        ],
+    );
+    let body = std::fs::read_dir(dir.join(&out))
+        .ok()
+        .and_then(|entries| {
+            entries
+                .filter_map(|entry| entry.ok())
+                .map(|entry| entry.path())
+                .find(|path| path.extension().map(|ext| ext == "md").unwrap_or(false))
+        })
+        .map(|path| std::fs::read_to_string(path).expect("the body reads"));
+    (code, err, body)
+}
+
+/// The printed line of the body carrying the row of the
+/// named label, standing whole.
+fn row_of(body: &str, label: &str) -> String {
+    let head = format!("| {label} |");
+    body.lines()
+        .find(|line| line.starts_with(&head))
+        .map(|line| line.to_string())
+        .expect("the row stands in the body")
+}
+
+#[test]
+fn test_a_ruling_body_over_plain_texts_stands_with_its_five_text_rows_whole_and_two_cells_wide() {
+    let dir = scratch("body-plain-texts");
+    let pack = pack_with_recommendation(&dir);
+    let (code, err, body) = rule_door(&dir, &pack, "plain");
+    assert_eq!(code, 0, "the door emits the body: {err}");
+    let body = body.expect("the body stands written");
+    assert!(
+        body.contains("# Ruling for unit checks"),
+        "the heading names the check: {body}"
+    );
+    let rows = [
+        ("Repository", "| Repository | synthetic-repo |"),
+        ("Check", "| Check | unit checks |"),
+        (
+            "Decision model recommendation",
+            "| Decision model recommendation | keep |",
+        ),
+        ("Decision model", "| Decision model | jev-1.13.0 |"),
+        (
+            "Decision rationale",
+            "| Decision rationale | synthetic grounds |",
+        ),
+    ];
+    for (label, row) in rows {
+        let line = row_of(&body, label);
+        assert_eq!(line, row, "the row stands whole: {body}");
+        assert_eq!(
+            line.matches('|').count(),
+            3,
+            "the row stands two cells wide: {body}"
+        );
+    }
+}
+
+#[test]
+fn test_a_ruling_body_with_a_rationale_carrying_a_line_feed_stands_with_its_row_split_across_two_printed_lines(
+) {
+    let dir = scratch("body-rationale-breaks");
+    let pack = pack_with_recommendation(&dir);
+    let shaped = with_record_text(&pack, "rationale", "grounds\nsecond line");
+    let (code, err, body) = rule_door(&dir, &shaped, "lf");
+    assert_eq!(code, 0, "the door emits the body: {err}");
+    let body = body.expect("the body stands written");
+    assert!(
+        body.contains("| Decision rationale | grounds\nsecond line |"),
+        "the row splits at the break inside the value: {body}"
+    );
+    let shaped = with_record_text(&pack, "rationale", "grounds\n");
+    let (code, err, body) = rule_door(&dir, &shaped, "tail");
+    assert_eq!(code, 0, "the door emits the body: {err}");
+    let body = body.expect("the body stands written");
+    assert!(
+        body.contains("| Decision rationale | grounds\n |"),
+        "the closing mark stands alone on the second printed line: {body}"
+    );
+    let shaped = with_record_text(&pack, "rationale", "a\rb");
+    let (code, err, body) = rule_door(&dir, &shaped, "cr");
+    assert_eq!(code, 0, "the door emits the body: {err}");
+    let body = body.expect("the body stands written");
+    assert!(
+        body.contains("| Decision rationale | a\rb |"),
+        "the row stands whole in its bytes with the return inside it: {body}"
+    );
+}
+
+#[test]
+fn test_a_ruling_body_with_a_model_carrying_a_line_feed_stands_with_its_row_split_across_two_printed_lines(
+) {
+    let dir = scratch("body-model-breaks");
+    let pack = pack_with_recommendation(&dir);
+    let shaped = with_record_text(&pack, "model", "jev\n1");
+    let (code, err, body) = rule_door(&dir, &shaped, "lf");
+    assert_eq!(code, 0, "the door emits the body: {err}");
+    let body = body.expect("the body stands written");
+    assert!(
+        body.contains("| Decision model | jev\n1 |"),
+        "the row splits at the break inside the value: {body}"
+    );
+    let shaped = with_record_text(&pack, "model", "a\rb");
+    let (code, err, body) = rule_door(&dir, &shaped, "cr");
+    assert_eq!(code, 0, "the door emits the body: {err}");
+    let body = body.expect("the body stands written");
+    assert!(
+        body.contains("| Decision model | a\rb |"),
+        "the row stands whole in its bytes with the return inside it: {body}"
+    );
+}
+
+#[test]
+fn test_a_ruling_body_with_a_stored_pack_its_recommendation_carrying_a_break_or_a_pipe_stands_with_its_row_split_or_three_cells_wide(
+) {
+    let dir = scratch("body-stored-recommendation");
+    let pack = pack_with_recommendation(&dir);
+    let shaped = with_record_text(&pack, "recommendation", "keep\nkill");
+    let (code, err, body) = rule_door(&dir, &shaped, "lf");
+    assert_eq!(code, 0, "the door emits the body: {err}");
+    let body = body.expect("the body stands written");
+    assert!(
+        body.contains("| Decision model recommendation | keep\nkill |"),
+        "the stored recommendation prints as it stands and splits its row: {body}"
+    );
+    let shaped = with_record_text(&pack, "recommendation", "a | b");
+    let (code, err, body) = rule_door(&dir, &shaped, "pipe");
+    assert_eq!(code, 0, "the door emits the body: {err}");
+    let body = body.expect("the body stands written");
+    assert!(
+        body.contains("| Decision model recommendation | a | b |"),
+        "the stored recommendation prints its pipe as it stands: {body}"
+    );
+}
+
+#[test]
+fn test_a_ruling_body_with_a_pipe_in_its_rationale_or_its_model_or_its_repository_text_stands_with_its_row_three_cells_wide(
+) {
+    let dir = scratch("body-pipes");
+    let pack = pack_with_recommendation(&dir);
+    let shaped = with_record_text(&pack, "rationale", "a | b");
+    let (code, err, body) = rule_door(&dir, &shaped, "rationale");
+    assert_eq!(code, 0, "the door emits the body: {err}");
+    let body = body.expect("the body stands written");
+    assert!(
+        body.contains("| Decision rationale | a | b |"),
+        "the rationale row stands three cells wide: {body}"
+    );
+    let shaped = with_record_text(&pack, "model", "jev | 1");
+    let (code, err, body) = rule_door(&dir, &shaped, "model");
+    assert_eq!(code, 0, "the door emits the body: {err}");
+    let body = body.expect("the body stands written");
+    assert!(
+        body.contains("| Decision model | jev | 1 |"),
+        "the model row stands three cells wide: {body}"
+    );
+    let shaped = with_text(&pack, "repo", "a | b");
+    let (code, err, body) = rule_door(&dir, &shaped, "repo");
+    assert_eq!(code, 0, "the door emits the body: {err}");
+    let body = body.expect("the body stands written");
+    assert!(
+        body.contains("| Repository | a | b |"),
+        "the repository row stands three cells wide: {body}"
+    );
+}
+
+#[test]
+fn test_a_ruling_body_with_a_hash_or_a_pipe_in_its_check_stands_with_the_mark_printed_raw_in_its_heading(
+) {
+    let dir = scratch("body-heading-marks");
+    let pack = pack_with_recommendation(&dir);
+    let shaped = with_text(&pack, "check", "a#b");
+    let (code, err, body) = rule_door(&dir, &shaped, "hash");
+    assert_eq!(code, 0, "the door emits the body: {err}");
+    let body = body.expect("the body stands written");
+    assert!(
+        body.contains("# Ruling for a#b"),
+        "the hash stands raw in the heading: {body}"
+    );
+    assert!(
+        body.contains("| Check | a#b |"),
+        "the hash stands raw in the check row: {body}"
+    );
+    let shaped = with_text(&pack, "check", "a | b");
+    let (code, err, body) = rule_door(&dir, &shaped, "pipe");
+    assert_eq!(code, 0, "the door emits the body: {err}");
+    let body = body.expect("the body stands written");
+    assert!(
+        body.contains("# Ruling for a | b"),
+        "the pipe stands raw in the heading: {body}"
+    );
+    assert!(
+        body.contains("| Check | a | b |"),
+        "the pipe stands raw in the check row: {body}"
+    );
+}
+
+#[test]
+fn test_a_ruling_for_a_pack_whose_repository_text_or_check_carries_a_break_is_refused_at_the_pack_reading_with_no_body_emitted(
+) {
+    let dir = scratch("body-upstream-fence");
+    let pack = pack_with_recommendation(&dir);
+    let shaped = with_text(&pack, "repo", "a\nb");
+    let (code, err, body) = rule_door(&dir, &shaped, "repo-lf");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the evidence pack repository label must not carry a newline"),
+        "the refusal fires at the pack name reading: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_text(&pack, "repo", "a\rb");
+    let (code, err, body) = rule_door(&dir, &shaped, "repo-cr");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the evidence pack repository label must not carry a newline"),
+        "the refusal fires at the pack name reading: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_text(&pack, "check", "a\nb");
+    let (code, err, body) = rule_door(&dir, &shaped, "check-lf");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the evidence pack check name must not carry a newline"),
+        "the refusal fires at the pack name reading: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+}
+
+#[test]
+fn test_a_ruling_body_with_a_rationale_standing_as_exactly_a_line_feed_in_a_stored_pack_stands_with_its_row_split_under_the_field_set_alone(
+) {
+    let dir = scratch("body-rationale-standing-as-break");
+    let pack = pack_with_recommendation(&dir);
+    let shaped = with_record_text(&pack, "rationale", "\n");
+    let (code, err, body) = rule_door(&dir, &shaped, "is-lf");
+    assert_eq!(code, 0, "the door emits the body: {err}");
+    let body = body.expect("the body stands written");
+    assert!(
+        body.contains("| Decision rationale | \n |"),
+        "the row splits with the closing mark alone on the second printed line: {body}"
+    );
+}
