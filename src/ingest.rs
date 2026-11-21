@@ -849,8 +849,20 @@ pub fn read_catchledger_packs(document: &JsonValue) -> Result<Vec<JsonValue>> {
             let window = standing_window(document);
             validate_history_window(&window)?;
             let mut packs = Vec::new();
+            let mut seen_checks: Vec<&str> = Vec::new();
             for entry in checks {
-                packs.push(derive_pack_from_entry(entry, document, &window)?);
+                let pack = derive_pack_from_entry(entry, document, &window)?;
+                let check = entry
+                    .get("name")
+                    .and_then(|value| value.as_text())
+                    .unwrap_or("");
+                if seen_checks.contains(&check) {
+                    return Err(TameshiError::refusal(format!(
+                        "the catchledger ledger names a check more than once ({check})"
+                    )));
+                }
+                seen_checks.push(check);
+                packs.push(pack);
             }
             Ok(packs)
         }

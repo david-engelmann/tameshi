@@ -778,3 +778,211 @@ fn test_a_decision_with_a_recommendation_standing_as_exactly_a_line_feed_is_refu
         "{err}"
     );
 }
+
+fn blindness_document(traces: &str) -> String {
+    format!(r#"{{"format": "blindgate-evidence/1", "traces": [{traces}]}}"#)
+}
+
+const SOUND_TRACE: &str = r#"{"check": "unit checks", "surface": "src/**", "observation": "read", "detail": "synthetic detail"}"#;
+
+#[test]
+fn test_a_blindness_document_missing_its_traces_beside_a_decision_naming_an_absent_check_is_refused_in_the_blindness_words_at_the_assemble_door(
+) {
+    let dir = scratch("blindness-missing-traces-assemble");
+    fixture(&dir, 1..=14);
+    write(
+        &dir,
+        "blindness.json",
+        r#"{"format": "blindgate-evidence/1"}"#,
+    );
+    write(&dir, "decision.json", &decision("other checks", "kill"));
+    let (code, err) = run(
+        &dir,
+        &[
+            "assemble",
+            "--catchledger",
+            "cl-pack.json",
+            "--blindgate",
+            "blindness.json",
+            "--decision",
+            "decision.json",
+            "--packs-dir",
+            "packs",
+        ],
+    );
+    assert_eq!(code, 1);
+    assert!(
+        err.contains("the blindness evidence has the wrong fields (missing traces)"),
+        "{err}"
+    );
+    assert!(
+        !err.contains("names a check the run does not assemble"),
+        "the blindness reading stands ahead of the named check test: {err}"
+    );
+}
+
+#[test]
+fn test_a_sound_blindness_document_beside_a_decision_naming_an_absent_check_is_refused_in_the_naming_sentence(
+) {
+    let dir = scratch("blindness-sound-absent-check");
+    fixture(&dir, 1..=14);
+    write(&dir, "blindness.json", &blindness_document(SOUND_TRACE));
+    write(&dir, "decision.json", &decision("other checks", "kill"));
+    let (code, err) = run(
+        &dir,
+        &[
+            "assemble",
+            "--catchledger",
+            "cl-pack.json",
+            "--blindgate",
+            "blindness.json",
+            "--decision",
+            "decision.json",
+            "--packs-dir",
+            "packs",
+        ],
+    );
+    assert_eq!(code, 1);
+    assert!(
+        err.contains(
+            "the decision document names a check the run does not assemble (other checks)"
+        ),
+        "{err}"
+    );
+}
+
+#[test]
+fn test_a_blindness_trace_missing_its_detail_beside_a_decision_naming_an_absent_check_is_refused_in_the_trace_words(
+) {
+    let dir = scratch("blindness-trace-missing-detail");
+    fixture(&dir, 1..=14);
+    let trace = r#"{"check": "unit checks", "surface": "src/**", "observation": "read"}"#;
+    write(&dir, "blindness.json", &blindness_document(trace));
+    write(&dir, "decision.json", &decision("other checks", "kill"));
+    let (code, err) = run(
+        &dir,
+        &[
+            "assemble",
+            "--catchledger",
+            "cl-pack.json",
+            "--blindgate",
+            "blindness.json",
+            "--decision",
+            "decision.json",
+            "--packs-dir",
+            "packs",
+        ],
+    );
+    assert_eq!(code, 1);
+    assert!(
+        err.contains("the blindness trace has the wrong fields (missing detail)"),
+        "{err}"
+    );
+    assert!(
+        !err.contains("names a check the run does not assemble"),
+        "the entry discipline stands ahead of the named check test: {err}"
+    );
+}
+
+#[test]
+fn test_a_blindness_document_missing_its_traces_beside_a_decision_naming_an_absent_check_is_refused_in_the_blindness_words_through_the_validate_door(
+) {
+    let dir = scratch("blindness-missing-traces-validate");
+    assemble_with_decision(&dir, "keep");
+    write(
+        &dir,
+        "blindness.json",
+        r#"{"format": "blindgate-evidence/1"}"#,
+    );
+    write(
+        &dir,
+        "decision-absent.json",
+        &decision("other checks", "kill"),
+    );
+    let (code, err) = run(
+        &dir,
+        &[
+            "validate",
+            "--pack",
+            "packs/001-unit-checks.json",
+            "--catchledger",
+            "cl-pack.json",
+            "--canaryfield",
+            "canary.json",
+            "--blindgate",
+            "blindness.json",
+            "--decision",
+            "decision-absent.json",
+        ],
+    );
+    assert_eq!(code, 1);
+    assert!(
+        err.contains("the blindness evidence has the wrong fields (missing traces)"),
+        "{err}"
+    );
+    assert!(
+        !err.contains("names a check the run does not assemble"),
+        "the blindness reading stands ahead of the named check test at the validate door: {err}"
+    );
+}
+
+#[test]
+fn test_the_decision_reading_stands_ahead_of_the_blindness_reading_and_the_named_check_test_stands_ahead_of_the_per_pack_readings(
+) {
+    let dir = scratch("decision-reading-ahead-of-blindness");
+    fixture(&dir, 1..=14);
+    write(
+        &dir,
+        "blindness.json",
+        r#"{"format": "blindgate-evidence/1"}"#,
+    );
+    write(&dir, "decision.json", &decision("unit checks", "shred"));
+    let (code, err) = run(
+        &dir,
+        &[
+            "assemble",
+            "--catchledger",
+            "cl-pack.json",
+            "--blindgate",
+            "blindness.json",
+            "--decision",
+            "decision.json",
+            "--packs-dir",
+            "packs",
+        ],
+    );
+    assert_eq!(code, 1);
+    assert!(
+        err.contains("the decision document carries an unknown recommendation (shred)"),
+        "{err}"
+    );
+    assert!(
+        !err.contains("blindness evidence has the wrong fields"),
+        "the decision reading stands ahead of the assembly whole: {err}"
+    );
+    let dir = scratch("named-check-ahead-of-per-pack");
+    fixture(&dir, 1..=14);
+    write(&dir, "canary-bare.json", r#"{"gates": ["unit checks"]}"#);
+    write(&dir, "decision.json", &decision("other checks", "kill"));
+    let (code, err) = run(
+        &dir,
+        &[
+            "assemble",
+            "--catchledger",
+            "cl-pack.json",
+            "--canaryfield",
+            "canary-bare.json",
+            "--decision",
+            "decision.json",
+            "--packs-dir",
+            "packs",
+        ],
+    );
+    assert_eq!(code, 1);
+    assert!(
+        err.contains(
+            "the decision document names a check the run does not assemble (other checks)"
+        ),
+        "{err}"
+    );
+}
