@@ -948,3 +948,247 @@ fn test_an_unknown_ruling_word_over_an_unsound_pack_refuses_at_the_pack_reading_
         assert!(body.is_none(), "no body stands emitted");
     }
 }
+
+/// Assemble the pack standing below the floor, the sibling
+/// of the pack standing above the floor shaped by the same
+/// helpers at fewer history days, so the CI history leg of
+/// its accounting falls short and the generator refuses it
+/// at the floor, and read it back as a document.
+fn pack_below_floor(dir: &Path) -> JsonValue {
+    write(dir, "cl-pack.json", &cl_pack(1..=7));
+    write(dir, "canary.json", &canary());
+    write(dir, "decision.json", &recommendation_decision());
+    let (code, err) = run(
+        dir,
+        &[
+            "assemble",
+            "--catchledger",
+            "cl-pack.json",
+            "--canaryfield",
+            "canary.json",
+            "--decision",
+            "decision.json",
+            "--packs-dir",
+            "packs",
+        ],
+    );
+    assert_eq!(code, 0, "the assembly stands: {err}");
+    let text =
+        std::fs::read_to_string(dir.join("packs/001-unit-checks.json")).expect("the pack reads");
+    parse(&text).expect("the pack parses")
+}
+
+#[test]
+fn test_a_pack_below_the_floor_refuses_a_ruling_with_its_check_name_standing_in_the_floor_sentence_and_the_legs_of_its_fixture_behind_it(
+) {
+    let dir = scratch("floor-plain");
+    let pack = pack_below_floor(&dir);
+    let (code, err, body) = rule_door(&dir, &pack, "plain");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("ruling refused for check unit checks because the evidence is below the floor. the CI history leg holds 7 of 14 required days and falls short by 7."),
+        "the floor sentence carries the name in its prose and the legs of the fixture behind it: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+}
+
+#[test]
+fn test_a_check_name_carrying_a_closing_parenthesis_or_a_full_stop_and_a_space_or_the_word_because_plants_its_prose_in_the_floor_refusal_as_it_stands(
+) {
+    let dir = scratch("floor-prose");
+    let pack = pack_below_floor(&dir);
+    let shaped = with_text(&pack, "check", "unit) checks");
+    let (code, err, body) = rule_door(&dir, &shaped, "close");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains(
+            "ruling refused for check unit) checks because the evidence is below the floor"
+        ),
+        "the closing parenthesis prints as data in the prose: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_text(&pack, "check", "unit (checks");
+    let (code, err, body) = rule_door(&dir, &shaped, "open");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains(
+            "ruling refused for check unit (checks because the evidence is below the floor"
+        ),
+        "the opening parenthesis prints as data in the prose: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_text(&pack, "check", "unit. checks");
+    let (code, err, body) = rule_door(&dir, &shaped, "stop");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains(
+            "ruling refused for check unit. checks because the evidence is below the floor"
+        ),
+        "the full stop and the space stand as two sentences in the printed refusal: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_text(&pack, "check", "unit because checks");
+    let (code, err, body) = rule_door(&dir, &shaped, "because");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains(
+            "ruling refused for check unit because checks because the evidence is below the floor"
+        ),
+        "the word because prints a second because clause inside the first: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+}
+
+#[test]
+fn test_a_check_name_prints_as_it_stands_whole_in_the_floor_refusal_in_its_plain_shapes() {
+    let dir = scratch("floor-plain-shapes");
+    let pack = pack_below_floor(&dir);
+    let shaped = with_text(&pack, "check", "unit\tchecks");
+    let (code, err, body) = rule_door(&dir, &shaped, "tab");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains(
+            "ruling refused for check unit\tchecks because the evidence is below the floor"
+        ),
+        "a name carrying a tab prints as it stands: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_text(&pack, "check", "unit | checks");
+    let (code, err, body) = rule_door(&dir, &shaped, "pipe");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains(
+            "ruling refused for check unit | checks because the evidence is below the floor"
+        ),
+        "a name carrying a pipe prints as it stands: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_text(&pack, "check", "unit #checks");
+    let (code, err, body) = rule_door(&dir, &shaped, "hash");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains(
+            "ruling refused for check unit #checks because the evidence is below the floor"
+        ),
+        "a name carrying a hash prints as it stands: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_text(&pack, "check", "unit {} checks");
+    let (code, err, body) = rule_door(&dir, &shaped, "braces");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains(
+            "ruling refused for check unit {} checks because the evidence is below the floor"
+        ),
+        "a name carrying a brace pair prints as it stands with no format standing behind the braces: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_text(&pack, "check", "unit \"checks\"");
+    let (code, err, body) = rule_door(&dir, &shaped, "quote");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains(
+            "ruling refused for check unit \"checks\" because the evidence is below the floor"
+        ),
+        "a name carrying a quote prints as it stands: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_text(&pack, "check", "unit \\ checks");
+    let (code, err, body) = rule_door(&dir, &shaped, "backslash");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains(
+            "ruling refused for check unit \\ checks because the evidence is below the floor"
+        ),
+        "a name carrying a literal backslash prints as it stands: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_text(&pack, "check", "unit chécks");
+    let (code, err, body) = rule_door(&dir, &shaped, "multibyte");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains(
+            "ruling refused for check unit chécks because the evidence is below the floor"
+        ),
+        "a name carrying a character of more than one byte prints as it stands: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_text(&pack, "check", " unit checks ");
+    let (code, err, body) = rule_door(&dir, &shaped, "edges");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains(
+            "ruling refused for check  unit checks  because the evidence is below the floor"
+        ),
+        "a name carrying spaces at its edges prints untrimmed with its spaces standing: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+}
+
+#[test]
+fn test_the_floor_echo_stands_silent_behind_the_word_test_and_behind_the_pack_reading_over_a_pack_below_the_floor(
+) {
+    let dir = scratch("floor-ordering");
+    let pack = pack_below_floor(&dir);
+    let (code, err, body) = word_rule_door(&dir, &pack, "shred", "word-over-floor");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested (shred)"),
+        "the word test fires ahead of the floor reading and the word stands echoed there: {err}"
+    );
+    assert!(
+        !err.contains("below the floor"),
+        "the floor sentence does not speak: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_text(&pack, "repo", "a\nb");
+    let (code, err, body) = rule_door(&dir, &shaped, "unsound-over-floor");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the evidence pack repository label must not carry a newline"),
+        "the pack reading fires ahead of the floor gate: {err}"
+    );
+    assert!(
+        !err.contains("below the floor"),
+        "the floor sentence does not speak: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+}
+
+#[cfg(unix)]
+#[test]
+fn test_a_ruling_word_whose_bytes_are_not_text_over_a_pack_below_the_floor_receives_the_floor_refusal_itself_with_no_word_echoed_and_no_escape_spelled(
+) {
+    let dir = scratch("floor-byte-route");
+    let pack = pack_below_floor(&dir);
+    let (code, err, body) = byte_word_rule_door(&dir, &pack, b"ke\xffep", "bytes-over-floor");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains(
+            "ruling refused for check unit checks because the evidence is below the floor"
+        ),
+        "the byte word route receives the floor refusal itself: {err}"
+    );
+    assert!(
+        !err.contains("an unknown ruling was requested"),
+        "the unknown ruling sentence does not speak: {err}"
+    );
+    assert!(
+        !err.contains("\\udcff"),
+        "no escape spelling stands in the refusal: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let dir = scratch("floor-byte-route-control");
+    let pack = pack_with_recommendation(&dir);
+    let (code, err, body) = byte_word_rule_door(&dir, &pack, b"ke\xffep", "bytes-over-standing");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested (ke\\udcffep)"),
+        "past a pack at or above the floor the same byte word meets the unknown ruling refusal with the byte spelled as its escape: {err}"
+    );
+    assert!(
+        !err.contains("below the floor"),
+        "the floor sentence does not speak: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+}
