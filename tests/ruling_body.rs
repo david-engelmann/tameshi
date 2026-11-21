@@ -1377,6 +1377,22 @@ fn test_a_pack_of_the_second_format_missing_a_field_of_the_first_standing_meets_
         "no field stands named in a parenthetical behind the sentence: {err}"
     );
     assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_added_member(
+        &without_member(&pack, "sources"),
+        "provenance",
+        JsonValue::Null,
+    );
+    let (code, err, body) = rule_door(&dir, &shaped, "second-swapped");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the evidence pack has the wrong fields"),
+        "a pack of the second format standing at its count with one field of the first standing swapped meets the bare sentence: {err}"
+    );
+    assert!(
+        !err.contains("has the wrong fields ("),
+        "no field stands named in a parenthetical behind the sentence: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
 }
 
 #[test]
@@ -1502,6 +1518,22 @@ fn test_a_canary_performance_carrying_a_field_more_or_a_field_less_than_its_five
         "no field stands named in a parenthetical behind the sentence: {err}"
     );
     assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_member(
+        &pack,
+        "canary_performance",
+        with_renamed_member(&performance, "gate", "gate_name"),
+    );
+    let (code, err, body) = rule_door(&dir, &shaped, "swapped");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the canary performance has the wrong fields"),
+        "a performance standing at its five with one field swapped meets its bare sentence: {err}"
+    );
+    assert!(
+        !err.contains("has the wrong fields ("),
+        "no field stands named in a parenthetical behind the sentence: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
     let row = performance
         .get("results")
         .and_then(|item| item.as_list())
@@ -1525,6 +1557,18 @@ fn test_a_canary_performance_carrying_a_field_more_or_a_field_less_than_its_five
     assert!(
         err.contains("a canary performance result row has the wrong fields"),
         "a result row carrying a field less than its five meets its own bare sentence: {err}"
+    );
+    assert!(
+        !err.contains("has the wrong fields ("),
+        "no field stands named in a parenthetical behind the sentence: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_first_row(&pack, with_renamed_member(&row, "planted_files", "origin"));
+    let (code, err, body) = rule_door(&dir, &shaped, "row-swapped");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("a canary performance result row has the wrong fields"),
+        "a result row standing at its five with one field swapped meets its own bare sentence: {err}"
     );
     assert!(
         !err.contains("has the wrong fields ("),
