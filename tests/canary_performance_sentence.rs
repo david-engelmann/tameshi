@@ -24,7 +24,7 @@ const COVERING_COUNTS: &str =
 /// counts and its row its result and its planted files
 /// standing as the fragments the caller passes, each a
 /// fragment of JSON text.
-fn performance(counts: &str, result: &str, planted_files: &str) -> JsonValue {
+fn performance_with(counts: &str, result: &str, planted_files: &str) -> JsonValue {
     parse(&format!(
         "{{\"gate\": \"style\", \"counts\": {counts}, \"scored\": 1, \
          \"catch_rate\": 1.0, \"results\": [{{\"seed\": \"seed-1\", \"name\": \"row one\", \
@@ -95,7 +95,7 @@ fn assert_read<T>(outcome: Result<T, TameshiError>, standing: &str) {
 #[test]
 fn test_a_result_row_carrying_an_unknown_result_word_is_refused_by_the_performance_validation_with_the_result_word_sentence(
 ) {
-    let performance = performance(COVERING_COUNTS, "\"vanished\"", "[\"src/a.rs\"]");
+    let performance = performance_with(COVERING_COUNTS, "\"vanished\"", "[\"src/a.rs\"]");
     let error = refused(validate_canary_performance(&performance));
     assert_sentence(&error, RESULT_WORD_SENTENCE);
 }
@@ -103,10 +103,10 @@ fn test_a_result_row_carrying_an_unknown_result_word_is_refused_by_the_performan
 #[test]
 fn test_a_result_row_carrying_planted_files_standing_as_a_bare_text_or_as_null_is_refused_by_the_performance_validation_with_the_planted_files_sentence_and_a_row_carrying_no_planted_files_field_is_refused_with_the_row_fields_sentence_and_a_null_performance_stands_read(
 ) {
-    let performance = performance(COVERING_COUNTS, "\"caught\"", "\"src/a.rs\"");
+    let performance = performance_with(COVERING_COUNTS, "\"caught\"", "\"src/a.rs\"");
     let error = refused(validate_canary_performance(&performance));
     assert_sentence(&error, PLANTED_FILES_SENTENCE);
-    let performance = performance(COVERING_COUNTS, "\"caught\"", "null");
+    let performance = performance_with(COVERING_COUNTS, "\"caught\"", "null");
     let error = refused(validate_canary_performance(&performance));
     assert_sentence(&error, PLANTED_FILES_SENTENCE);
     let performance = performance_without_planted_files(COVERING_COUNTS);
@@ -121,14 +121,14 @@ fn test_a_result_row_carrying_planted_files_standing_as_a_bare_text_or_as_null_i
 #[test]
 fn test_the_counts_cover_sentence_stands_ahead_of_the_result_word_sentence_and_the_counts_disagree_sentence_stands_behind_the_row_tests(
 ) {
-    let performance = performance(
+    let performance = performance_with(
         "{\"caught\": 0, \"waved-through\": 0, \"not-applicable\": 0}",
         "\"vanished\"",
         "[\"src/a.rs\"]",
     );
     let error = refused(validate_canary_performance(&performance));
     assert_sentence(&error, COUNTS_COVER_SENTENCE);
-    let performance = performance(
+    let performance = performance_with(
         "{\"caught\": 2, \"waved-through\": 0, \"not-applicable\": 0, \"gate-broken\": 0}",
         "\"caught\"",
         "[\"src/a.rs\"]",
@@ -140,10 +140,10 @@ fn test_the_counts_cover_sentence_stands_ahead_of_the_result_word_sentence_and_t
 #[test]
 fn test_a_result_word_standing_as_a_whole_number_and_planted_files_holding_a_whole_number_meet_the_same_sentences_at_their_seats(
 ) {
-    let performance = performance(COVERING_COUNTS, "7", "[\"src/a.rs\"]");
+    let performance = performance_with(COVERING_COUNTS, "7", "[\"src/a.rs\"]");
     let error = refused(validate_canary_performance(&performance));
     assert_sentence(&error, RESULT_WORD_SENTENCE);
-    let performance = performance(COVERING_COUNTS, "\"caught\"", "[\"src/a.rs\", 7]");
+    let performance = performance_with(COVERING_COUNTS, "\"caught\"", "[\"src/a.rs\", 7]");
     let error = refused(validate_canary_performance(&performance));
     assert_sentence(&error, PLANTED_FILES_SENTENCE);
 }
