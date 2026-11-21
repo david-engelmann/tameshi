@@ -14,6 +14,9 @@ const COUNTS_COVER_SENTENCE: &str =
     "the canary performance counts must cover the four result words";
 const COUNTS_DISAGREE_SENTENCE: &str =
     "the canary performance counts disagree with their result rows";
+const COUNTS_NONNEGATIVE_SENTENCE: &str =
+    "the canary performance counts must be nonnegative whole numbers";
+const PERFORMANCE_FIELDS_SENTENCE: &str = "the canary performance has the wrong fields";
 
 /// The counts covering the four result words at zero, the
 /// counts standing under which the row tests stand reached.
@@ -159,4 +162,46 @@ fn test_a_performance_built_by_the_builder_from_a_sound_normalized_document_stan
         validate_canary_performance(&built),
         "the performance the builder built",
     );
+}
+
+#[test]
+fn test_a_performance_carrying_a_timed_out_result_row_stands_read_whole_by_the_performance_validation(
+) {
+    let performance = parse(
+        "{\"gate\": \"style\", \"counts\": {\"caught\": 0, \"waved-through\": 0, \
+         \"not-applicable\": 0, \"gate-broken\": 0}, \"scored\": 1, \
+         \"catch_rate\": 0.0, \"results\": [{\"seed\": \"seed-1\", \"name\": \"row one\", \
+         \"defect_class\": \"style\", \"result\": \"timed-out\", \
+         \"planted_files\": [\"src/a.rs\"]}]}",
+    )
+    .expect("the performance parses");
+    assert_read(
+        validate_canary_performance(&performance),
+        "a performance carrying a timed out result row",
+    );
+}
+
+#[test]
+fn test_the_counts_nonnegative_sentence_stands_ahead_of_the_result_word_sentence() {
+    let performance = performance_with(
+        "{\"caught\": -1, \"waved-through\": 0, \"not-applicable\": 0, \"gate-broken\": 0}",
+        "\"vanished\"",
+        "[\"src/a.rs\"]",
+    );
+    let error = refused(validate_canary_performance(&performance));
+    assert_sentence(&error, COUNTS_NONNEGATIVE_SENTENCE);
+}
+
+#[test]
+fn test_the_performance_fields_sentence_stands_ahead_of_the_result_word_sentence() {
+    let performance = parse(
+        "{\"gate\": \"style\", \"counts\": {\"caught\": 0, \"waved-through\": 0, \
+         \"not-applicable\": 0, \"gate-broken\": 0}, \"scored\": 1, \
+         \"catch_rate\": 1.0, \"results\": [{\"seed\": \"seed-1\", \"name\": \"row one\", \
+         \"defect_class\": \"style\", \"result\": \"vanished\", \
+         \"planted_files\": [\"src/a.rs\"]}], \"spare\": 0}",
+    )
+    .expect("the performance parses");
+    let error = refused(validate_canary_performance(&performance));
+    assert_sentence(&error, PERFORMANCE_FIELDS_SENTENCE);
 }
