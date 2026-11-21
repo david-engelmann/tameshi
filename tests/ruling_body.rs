@@ -587,6 +587,38 @@ fn test_a_ruling_for_a_pack_whose_repository_text_or_check_carries_a_break_is_re
         "the refusal fires at the pack name reading: {err}"
     );
     assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_text(&pack, "repo", "\n");
+    let (code, err, body) = rule_door(&dir, &shaped, "repo-is-lf");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the evidence pack needs a repository label"),
+        "a repository text standing as exactly a break meets the trim empty refusal ahead of the break refusal: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_text(&pack, "repo", "\r");
+    let (code, err, body) = rule_door(&dir, &shaped, "repo-is-cr");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the evidence pack needs a repository label"),
+        "a repository text standing as exactly a break meets the trim empty refusal ahead of the break refusal: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_text(&pack, "check", "\n");
+    let (code, err, body) = rule_door(&dir, &shaped, "check-is-lf");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the evidence pack needs a check name"),
+        "a check text standing as exactly a break meets the trim empty refusal ahead of the break refusal: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_text(&pack, "check", "\r");
+    let (code, err, body) = rule_door(&dir, &shaped, "check-is-cr");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the evidence pack needs a check name"),
+        "a check text standing as exactly a break meets the trim empty refusal ahead of the break refusal: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
 }
 
 #[test]
@@ -602,4 +634,317 @@ fn test_a_ruling_body_with_a_rationale_standing_as_exactly_a_line_feed_in_a_stor
         body.contains("| Decision rationale | \n |"),
         "the row splits with the closing mark alone on the second printed line: {body}"
     );
+}
+
+/// Drive the rule door over the pack with the ruling word
+/// standing as the caller hands it, where the standing rule
+/// door of this file fixes its word at keep, returning the
+/// exit standing, the refusal text, and the emitted body
+/// read back from the written artifact where the door wrote
+/// one.
+fn word_rule_door(
+    dir: &Path,
+    pack: &JsonValue,
+    word: &str,
+    tag: &str,
+) -> (i32, String, Option<String>) {
+    write(dir, "pack.json", &render_json(pack));
+    let out = format!("out-{tag}");
+    std::fs::create_dir_all(dir.join(&out)).expect("the out standing stands");
+    let (code, err) = run(
+        dir,
+        &[
+            "rule",
+            "--pack",
+            "pack.json",
+            "--ruling",
+            word,
+            "--out",
+            &out,
+        ],
+    );
+    let body = std::fs::read_dir(dir.join(&out))
+        .ok()
+        .and_then(|entries| {
+            entries
+                .filter_map(|entry| entry.ok())
+                .map(|entry| entry.path())
+                .find(|path| path.extension().map(|ext| ext == "md").unwrap_or(false))
+        })
+        .map(|path| std::fs::read_to_string(path).expect("the body reads"));
+    (code, err, body)
+}
+
+/// Drive the rule door over the pack with the ruling word
+/// standing as bytes that may not stand as text, the ruling
+/// argument built from the bytes themselves as the argument
+/// bytes pin of the command line tests builds it, returning
+/// the exit standing, the refusal text, and the emitted
+/// body read back from the written artifact where the door
+/// wrote one.
+#[cfg(unix)]
+fn byte_word_rule_door(
+    dir: &Path,
+    pack: &JsonValue,
+    word: &[u8],
+    tag: &str,
+) -> (i32, String, Option<String>) {
+    use std::ffi::OsString;
+    use std::os::unix::ffi::OsStringExt;
+
+    write(dir, "pack.json", &render_json(pack));
+    let out = format!("out-{tag}");
+    std::fs::create_dir_all(dir.join(&out)).expect("the out standing stands");
+    let output = Command::new(env!("CARGO_BIN_EXE_tameshi"))
+        .arg("rule")
+        .arg("--pack")
+        .arg("pack.json")
+        .arg("--ruling")
+        .arg(OsString::from_vec(word.to_vec()))
+        .arg("--out")
+        .arg(&out)
+        .current_dir(dir)
+        .output()
+        .expect("the binary runs");
+    let code = output.status.code().unwrap_or(-1);
+    let err = String::from_utf8_lossy(&output.stderr).to_string();
+    let body = std::fs::read_dir(dir.join(&out))
+        .ok()
+        .and_then(|entries| {
+            entries
+                .filter_map(|entry| entry.ok())
+                .map(|entry| entry.path())
+                .find(|path| path.extension().map(|ext| ext == "md").unwrap_or(false))
+        })
+        .map(|path| std::fs::read_to_string(path).expect("the body reads"));
+    (code, err, body)
+}
+
+#[test]
+fn test_an_unknown_ruling_word_carrying_a_closing_parenthesis_in_its_body_refuses_with_the_frame_closed_at_the_word_its_own_mark(
+) {
+    let dir = scratch("word-frame");
+    let pack = pack_with_recommendation(&dir);
+    let (code, err, body) = word_rule_door(&dir, &pack, "a)b", "close-in-body");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested (a)b)"),
+        "the frame stands closed at the word its own mark with a stray close behind it: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let (code, err, body) = word_rule_door(&dir, &pack, "a(b", "open-in-body");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested (a(b)"),
+        "the frame stands unbalanced the other way: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let (code, err, body) = word_rule_door(&dir, &pack, ")", "word-is-close");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested ())"),
+        "the word reads as an empty frame with a stray close standing behind it: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let (code, err, body) = word_rule_door(&dir, &pack, "", "empty-word");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested ()"),
+        "the empty word reads as the empty frame: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+}
+
+#[test]
+fn test_an_unknown_ruling_word_carrying_a_line_feed_in_its_body_refuses_with_the_sentence_split_across_two_printed_lines(
+) {
+    let dir = scratch("word-breaks");
+    let pack = pack_with_recommendation(&dir);
+    let (code, err, body) = word_rule_door(&dir, &pack, "a\nb", "lf-in-body");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested (a\nb)"),
+        "the sentence stands split across two printed lines at the break inside the word: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let (code, err, body) = word_rule_door(&dir, &pack, "a\rb", "cr-in-body");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested (a\rb)"),
+        "the sentence stands whole in its bytes on the one printed line with the return inside it: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let (code, err, body) = word_rule_door(&dir, &pack, "a)\nb", "mark-then-break");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested (a)\nb)"),
+        "the compound of a mark and a break prints with its residue on the second line: {err}"
+    );
+    assert_eq!(
+        err.lines().next(),
+        Some("an unknown ruling was requested (a)"),
+        "the first printed line reads as a complete refusal: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+}
+
+#[test]
+fn test_an_unknown_ruling_word_prints_as_it_stands_whole_in_its_plain_shapes() {
+    let dir = scratch("word-plain");
+    let pack = pack_with_recommendation(&dir);
+    let (code, err, body) = word_rule_door(&dir, &pack, "Keep", "capital-near");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested (Keep)"),
+        "a word differing from a ruling word by its case prints as it stands: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let (code, err, body) = word_rule_door(&dir, &pack, "keep ", "trailing-space");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested (keep )"),
+        "a word standing as a ruling word with a trailing space prints as it stands: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let (code, err, body) = word_rule_door(&dir, &pack, "demote-to-advisory", "verdict-word");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested (demote-to-advisory)"),
+        "the verdict word itself prints as it stands: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let (code, err, body) = word_rule_door(&dir, &pack, "not a ruling", "spaces");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested (not a ruling)"),
+        "a word carrying spaces prints as it stands: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let (code, err, body) = word_rule_door(&dir, &pack, "a\tb", "tab");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested (a\tb)"),
+        "a word carrying a tab prints as it stands: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let (code, err, body) = word_rule_door(&dir, &pack, "a|b", "pipe");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested (a|b)"),
+        "a word carrying a pipe prints as it stands: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let (code, err, body) = word_rule_door(&dir, &pack, "a#b", "hash");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested (a#b)"),
+        "a word carrying a hash prints as it stands: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let (code, err, body) = word_rule_door(&dir, &pack, "a{}b", "braces");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested (a{}b)"),
+        "a word carrying a brace pair prints as it stands with no format standing behind the braces: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let (code, err, body) = word_rule_door(&dir, &pack, "kéep", "multibyte");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested (kéep)"),
+        "a word carrying a character of more than one byte prints as it stands: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+}
+
+#[cfg(unix)]
+#[test]
+fn test_a_ruling_word_whose_bytes_are_not_text_refuses_with_the_undecodable_bytes_spelled_as_escapes_and_the_whole_characters_standing_as_themselves(
+) {
+    let dir = scratch("word-bytes");
+    let pack = pack_with_recommendation(&dir);
+    let (code, err, body) = byte_word_rule_door(&dir, &pack, b"ke\xffep", "ff-in-body");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested (ke\\udcffep)"),
+        "the byte that names no character stands spelled as its escape and every whole character stands as itself: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let (code, err, body) = byte_word_rule_door(&dir, &pack, b"a\n\xffb", "break-and-byte");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested (a\n\\udcffb)"),
+        "the break renders as itself and the byte stands spelled as its escape on the second printed line: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let (code, err, body) = byte_word_rule_door(&dir, &pack, b"a)\x80b", "mark-and-byte");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested (a)\\udc80b)"),
+        "the mark stands as itself faking the frame its close and the byte stands spelled as its escape: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let (code, err, body) = byte_word_rule_door(&dir, &pack, b"\x80", "lone-continuation");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested (\\udc80)"),
+        "the lone continuation byte stands spelled as its escape inside the frame: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let (code, err, body) = byte_word_rule_door(&dir, &pack, b"\xc3", "truncated");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested (\\udcc3)"),
+        "the truncated sequence stands spelled as its escape inside the frame: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let (code, err, body) = byte_word_rule_door(&dir, &pack, b"\xc3\xa9", "valid-two-byte");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("an unknown ruling was requested (é)"),
+        "a word standing whole as text routes to the library seat and prints raw: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+}
+
+#[test]
+fn test_an_unknown_ruling_word_over_an_unsound_pack_refuses_at_the_pack_reading_with_the_word_unechoed_at_both_seats(
+) {
+    let dir = scratch("word-ordering");
+    let pack = pack_with_recommendation(&dir);
+    let shaped = with_text(&pack, "repo", "a\nb");
+    let (code, err, body) = word_rule_door(&dir, &shaped, "a)b", "text-over-unsound");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the evidence pack repository label must not carry a newline"),
+        "the pack its refusal speaks ahead of the word test: {err}"
+    );
+    assert!(
+        !err.contains("an unknown ruling was requested"),
+        "the unknown ruling refusal does not speak: {err}"
+    );
+    assert!(
+        !err.contains("a)b"),
+        "the word stands nowhere in the refusal: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    #[cfg(unix)]
+    {
+        let (code, err, body) =
+            byte_word_rule_door(&dir, &shaped, b"ke\xffep", "bytes-over-unsound");
+        assert_eq!(code, 1, "the door refuses at the standing exit");
+        assert!(
+            err.contains("the evidence pack repository label must not carry a newline"),
+            "the pack its refusal speaks ahead of the word test through the kill word call: {err}"
+        );
+        assert!(
+            !err.contains("an unknown ruling was requested"),
+            "the unknown ruling refusal does not speak: {err}"
+        );
+        assert!(
+            !err.contains("\\udcff"),
+            "the escaped word stands nowhere in the refusal: {err}"
+        );
+        assert!(body.is_none(), "no body stands emitted");
+    }
 }
