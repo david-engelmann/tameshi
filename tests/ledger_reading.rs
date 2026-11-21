@@ -221,6 +221,32 @@ fn test_a_check_repeated_at_a_distance_in_a_ledger_is_the_name_the_refusal_echoe
         !err.contains("more than once (style checks)"),
         "the first repeated name stands echoed: {err}"
     );
+    let dir = scratch("repeated-name-carrying-a-backslash");
+    let doc = ledger(&[
+        entry(r"unit\\checks", SCORECARD, "001-unit-checks.json"),
+        entry("style checks", SCORECARD, "002-style-checks.json"),
+        entry(r"unit\\checks", SCORECARD_FIRES_41, "003-unit-checks.json"),
+    ]);
+    write(&dir, "ledger.json", &doc);
+    let (code, err) = run(
+        &dir,
+        &[
+            "assemble",
+            "--catchledger",
+            "ledger.json",
+            "--packs-dir",
+            "packs",
+        ],
+    );
+    assert_eq!(code, 1);
+    assert!(
+        err.contains("the catchledger ledger names a check more than once (unit\\checks)"),
+        "{err}"
+    );
+    assert!(
+        !err.contains("more than once (unit\\\\checks)"),
+        "the echoed name stands unescaped: {err}"
+    );
 }
 
 #[test]
