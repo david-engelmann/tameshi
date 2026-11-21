@@ -1192,3 +1192,421 @@ fn test_a_ruling_word_whose_bytes_are_not_text_over_a_pack_below_the_floor_recei
     );
     assert!(body.is_none(), "no body stands emitted");
 }
+/// The document with one member standing removed, every
+/// other member as it stands.
+fn without_member(document: &JsonValue, field: &str) -> JsonValue {
+    let pairs: Vec<(String, JsonValue)> = document
+        .as_object()
+        .expect("the document stands as an object")
+        .iter()
+        .filter(|(key, _)| key != field)
+        .map(|(key, held)| (key.clone(), held.clone()))
+        .collect();
+    JsonValue::Object(pairs)
+}
+
+/// The document with one member standing added at its
+/// tail, every member it carries as it stands.
+fn with_added_member(document: &JsonValue, field: &str, value: JsonValue) -> JsonValue {
+    let mut pairs: Vec<(String, JsonValue)> = document
+        .as_object()
+        .expect("the document stands as an object")
+        .iter()
+        .map(|(key, held)| (key.clone(), held.clone()))
+        .collect();
+    pairs.push((field.to_string(), value));
+    JsonValue::Object(pairs)
+}
+
+/// The document with one member standing under a new
+/// name, its value carried as it stands.
+fn with_renamed_member(document: &JsonValue, from: &str, to: &str) -> JsonValue {
+    let pairs: Vec<(String, JsonValue)> = document
+        .as_object()
+        .expect("the document stands as an object")
+        .iter()
+        .map(|(key, held)| {
+            if key == from {
+                (to.to_string(), held.clone())
+            } else {
+                (key.clone(), held.clone())
+            }
+        })
+        .collect();
+    JsonValue::Object(pairs)
+}
+
+/// The document with one member standing in the place
+/// of the member it carries, the shaped member standing
+/// as supplied.
+fn with_member(document: &JsonValue, field: &str, shaped: JsonValue) -> JsonValue {
+    let pairs: Vec<(String, JsonValue)> = document
+        .as_object()
+        .expect("the document stands as an object")
+        .iter()
+        .map(|(key, held)| {
+            if key == field {
+                (key.clone(), shaped.clone())
+            } else {
+                (key.clone(), held.clone())
+            }
+        })
+        .collect();
+    JsonValue::Object(pairs)
+}
+
+/// The pack with the first result row of its canary
+/// performance standing in the shaped form supplied,
+/// every other row as it stands.
+fn with_first_row(pack: &JsonValue, shaped_row: JsonValue) -> JsonValue {
+    let performance = pack
+        .get("canary_performance")
+        .cloned()
+        .unwrap_or(JsonValue::Null);
+    let rows: Vec<JsonValue> = performance
+        .get("results")
+        .and_then(|item| item.as_list())
+        .expect("the performance carries its rows")
+        .iter()
+        .enumerate()
+        .map(|(at, row)| {
+            if at == 0 {
+                shaped_row.clone()
+            } else {
+                row.clone()
+            }
+        })
+        .collect();
+    with_member(
+        pack,
+        "canary_performance",
+        with_member(&performance, "results", JsonValue::List(rows)),
+    )
+}
+
+#[test]
+fn test_a_pack_of_the_first_format_missing_a_field_or_carrying_an_unexpected_field_or_standing_at_its_count_with_one_field_swapped_meets_the_bare_wrong_fields_sentence_with_no_field_named(
+) {
+    let dir = scratch("field-first");
+    let pack = pack_above_floor(&dir);
+    let shaped = without_member(&pack, "sources");
+    let (code, err, body) = rule_door(&dir, &shaped, "missing");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the evidence pack has the wrong fields"),
+        "a pack missing a field meets the bare sentence: {err}"
+    );
+    assert!(
+        !err.contains("has the wrong fields ("),
+        "no field stands named in a parenthetical behind the sentence: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_added_member(&pack, "provenance", JsonValue::Null);
+    let (code, err, body) = rule_door(&dir, &shaped, "unexpected");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the evidence pack has the wrong fields"),
+        "a pack carrying an unexpected field meets the bare sentence: {err}"
+    );
+    assert!(
+        !err.contains("has the wrong fields ("),
+        "no field stands named in a parenthetical behind the sentence: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_added_member(
+        &without_member(&pack, "sources"),
+        "provenance",
+        JsonValue::Null,
+    );
+    let (code, err, body) = rule_door(&dir, &shaped, "swapped");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the evidence pack has the wrong fields"),
+        "a pack standing at its count with one field swapped meets the bare sentence: {err}"
+    );
+    assert!(
+        !err.contains("has the wrong fields ("),
+        "no field stands named in a parenthetical behind the sentence: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+}
+
+#[test]
+fn test_a_pack_of_the_second_format_missing_a_field_of_the_first_standing_meets_the_bare_sentence_and_a_pack_of_the_first_format_carrying_a_recommendation_meets_it_alike_and_a_pack_of_the_second_format_carrying_no_recommendation_meets_its_own_wording_ahead_of_the_field_set_test(
+) {
+    let dir = scratch("field-second");
+    let pack = pack_with_recommendation(&dir);
+    let record = pack
+        .get("recommendation")
+        .cloned()
+        .unwrap_or(JsonValue::Null);
+    let shaped = without_member(&pack, "sources");
+    let (code, err, body) = rule_door(&dir, &shaped, "second-missing");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the evidence pack has the wrong fields"),
+        "a pack of the second format missing a field of the first standing meets the bare sentence: {err}"
+    );
+    assert!(
+        !err.contains("has the wrong fields ("),
+        "no field stands named in a parenthetical behind the sentence: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = without_member(&pack, "recommendation");
+    let (code, err, body) = rule_door(&dir, &shaped, "second-bare");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the evidence pack carries the format tameshi-pack/2 and no recommendation"),
+        "a pack of the second format carrying no recommendation meets its own wording: {err}"
+    );
+    assert!(
+        !err.contains("has the wrong fields"),
+        "the field set sentence does not speak behind the presence wording: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let standing = pack_above_floor(&dir);
+    let shaped = with_added_member(&standing, "recommendation", record);
+    let (code, err, body) = rule_door(&dir, &shaped, "first-carrying");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the evidence pack has the wrong fields"),
+        "a pack of the first format carrying a recommendation meets the bare sentence alike: {err}"
+    );
+    assert!(
+        !err.contains("has the wrong fields ("),
+        "no field stands named in a parenthetical behind the sentence: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_added_member(
+        &without_member(&pack, "sources"),
+        "provenance",
+        JsonValue::Null,
+    );
+    let (code, err, body) = rule_door(&dir, &shaped, "second-swapped");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the evidence pack has the wrong fields"),
+        "a pack of the second format standing at its count with one field of the first standing swapped meets the bare sentence: {err}"
+    );
+    assert!(
+        !err.contains("has the wrong fields ("),
+        "no field stands named in a parenthetical behind the sentence: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+}
+
+#[test]
+fn test_a_recommendation_record_standing_a_field_short_of_its_four_or_a_field_past_them_or_at_four_with_one_field_swapped_meets_the_bare_wrong_fields_sentence(
+) {
+    let dir = scratch("field-record");
+    let pack = pack_with_recommendation(&dir);
+    let record = pack
+        .get("recommendation")
+        .cloned()
+        .unwrap_or(JsonValue::Null);
+    let shaped = with_member(&pack, "recommendation", without_member(&record, "run"));
+    let (code, err, body) = rule_door(&dir, &shaped, "short");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the evidence pack has the wrong fields"),
+        "a record standing a field short of its four meets the bare sentence: {err}"
+    );
+    assert!(
+        !err.contains("has the wrong fields ("),
+        "no field stands named in a parenthetical behind the sentence: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_member(
+        &pack,
+        "recommendation",
+        with_added_member(&record, "addendum", JsonValue::Null),
+    );
+    let (code, err, body) = rule_door(&dir, &shaped, "past");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the evidence pack has the wrong fields"),
+        "a record standing a field past its four meets the bare sentence: {err}"
+    );
+    assert!(
+        !err.contains("has the wrong fields ("),
+        "no field stands named in a parenthetical behind the sentence: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_member(
+        &pack,
+        "recommendation",
+        with_renamed_member(&record, "run", "run_name"),
+    );
+    let (code, err, body) = rule_door(&dir, &shaped, "swapped");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the evidence pack has the wrong fields"),
+        "a record standing at four with one field swapped meets the bare sentence: {err}"
+    );
+    assert!(
+        !err.contains("has the wrong fields ("),
+        "no field stands named in a parenthetical behind the sentence: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+}
+
+#[test]
+fn test_a_pack_under_a_third_format_name_with_a_wrong_field_set_meets_the_wrong_fields_sentence_and_the_same_name_with_its_exact_fields_meets_the_format_wording(
+) {
+    let dir = scratch("field-ordering");
+    let pack = pack_above_floor(&dir);
+    let named = with_text(&pack, "format", "tameshi-pack/3");
+    let (code, err, body) = rule_door(&dir, &named, "third-exact");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the evidence pack carries the wrong format name"),
+        "a pack under a third format name with its exact fields meets the format wording: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = without_member(&named, "sources");
+    let (code, err, body) = rule_door(&dir, &shaped, "third-wrong");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the evidence pack has the wrong fields"),
+        "a pack under a third format name with a wrong field set meets the wrong fields sentence: {err}"
+    );
+    assert!(
+        !err.contains("the wrong format name"),
+        "the format wording does not speak behind the field set sentence: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+}
+
+#[test]
+fn test_a_canary_performance_carrying_a_field_more_or_a_field_less_than_its_five_meets_its_bare_sentence_and_a_result_row_carrying_a_field_more_or_a_field_less_than_its_five_meets_its_own_and_a_performance_standing_null_stands_as_no_performance(
+) {
+    let dir = scratch("field-performance");
+    let pack = pack_with_recommendation(&dir);
+    let performance = pack
+        .get("canary_performance")
+        .cloned()
+        .unwrap_or(JsonValue::Null);
+    let shaped = with_member(
+        &pack,
+        "canary_performance",
+        with_added_member(&performance, "addendum", JsonValue::Null),
+    );
+    let (code, err, body) = rule_door(&dir, &shaped, "more");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the canary performance has the wrong fields"),
+        "a performance carrying a field more than its five meets its bare sentence: {err}"
+    );
+    assert!(
+        !err.contains("has the wrong fields ("),
+        "no field stands named in a parenthetical behind the sentence: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_member(
+        &pack,
+        "canary_performance",
+        without_member(&performance, "gate"),
+    );
+    let (code, err, body) = rule_door(&dir, &shaped, "less");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the canary performance has the wrong fields"),
+        "a performance carrying a field less than its five meets its bare sentence: {err}"
+    );
+    assert!(
+        !err.contains("has the wrong fields ("),
+        "no field stands named in a parenthetical behind the sentence: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_member(
+        &pack,
+        "canary_performance",
+        with_renamed_member(&performance, "gate", "gate_name"),
+    );
+    let (code, err, body) = rule_door(&dir, &shaped, "swapped");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the canary performance has the wrong fields"),
+        "a performance standing at its five with one field swapped meets its bare sentence: {err}"
+    );
+    assert!(
+        !err.contains("has the wrong fields ("),
+        "no field stands named in a parenthetical behind the sentence: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let row = performance
+        .get("results")
+        .and_then(|item| item.as_list())
+        .expect("the performance carries its rows")[0]
+        .clone();
+    let shaped = with_first_row(&pack, with_added_member(&row, "origin", JsonValue::Null));
+    let (code, err, body) = rule_door(&dir, &shaped, "row-more");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("a canary performance result row has the wrong fields"),
+        "a result row carrying a field more than its five meets its own bare sentence: {err}"
+    );
+    assert!(
+        !err.contains("has the wrong fields ("),
+        "no field stands named in a parenthetical behind the sentence: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_first_row(&pack, without_member(&row, "planted_files"));
+    let (code, err, body) = rule_door(&dir, &shaped, "row-less");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("a canary performance result row has the wrong fields"),
+        "a result row carrying a field less than its five meets its own bare sentence: {err}"
+    );
+    assert!(
+        !err.contains("has the wrong fields ("),
+        "no field stands named in a parenthetical behind the sentence: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_first_row(&pack, with_renamed_member(&row, "planted_files", "origin"));
+    let (code, err, body) = rule_door(&dir, &shaped, "row-swapped");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("a canary performance result row has the wrong fields"),
+        "a result row standing at its five with one field swapped meets its own bare sentence: {err}"
+    );
+    assert!(
+        !err.contains("has the wrong fields ("),
+        "no field stands named in a parenthetical behind the sentence: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let shaped = with_member(&pack, "canary_performance", JsonValue::Null);
+    let (code, err, body) = rule_door(&dir, &shaped, "null");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains(
+            "the pack floor accounting disagrees with the accounting recomputed from the pack evidence"
+        ),
+        "a performance standing null stands as no performance and the refusal arrives from the recompute seat: {err}"
+    );
+    assert!(
+        !err.contains("has the wrong fields"),
+        "no wrong fields sentence speaks at either level over a performance standing null: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+    let counts = performance
+        .get("counts")
+        .cloned()
+        .unwrap_or(JsonValue::Null);
+    let shaped = with_member(
+        &pack,
+        "canary_performance",
+        with_member(&performance, "counts", without_member(&counts, "caught")),
+    );
+    let (code, err, body) = rule_door(&dir, &shaped, "counts");
+    assert_eq!(code, 1, "the door refuses at the standing exit");
+    assert!(
+        err.contains("the canary performance counts must cover the four result words"),
+        "a counts object missing one of its four words meets the neighbour its own sentence: {err}"
+    );
+    assert!(
+        !err.contains("has the wrong fields"),
+        "no wrong fields sentence speaks at the neighbour seat: {err}"
+    );
+    assert!(body.is_none(), "no body stands emitted");
+}
