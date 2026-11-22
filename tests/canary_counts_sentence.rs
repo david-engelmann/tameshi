@@ -16,6 +16,7 @@ const NORM_COVER_SENTENCE: &str = "the canaryfield counts must cover the four re
 const NORM_NONNEGATIVE_SENTENCE: &str = "the canaryfield counts must be nonnegative whole numbers";
 const NORM_DISAGREE_SENTENCE: &str = "the canaryfield counts disagree with their result rows";
 const GATE_SENTENCE: &str = "the canary performance needs a gate name";
+const NORM_GATE_SENTENCE: &str = "the canaryfield gate name must be nonempty text";
 const NORM_PLANTED_SENTENCE: &str = "a canaryfield result row carries malformed planted files";
 
 fn performance_carrying(counts: &str, result: &str, planted_files: &str) -> JsonValue {
@@ -34,6 +35,15 @@ fn performance_with_gate(gate: &str, counts: &str) -> JsonValue {
          \"defect_class\": \"style\", \"result\": \"caught\", \"planted_files\": [\"src/a.rs\"]}}]}}"
     ))
     .expect("the performance parses")
+}
+
+fn normalized_with_gate(gate: &str, counts: &str) -> JsonValue {
+    parse(&format!(
+        "{{\"source_format\": \"canaryfield-catch-table\", \"gate\": {gate}, \
+         \"counts\": {counts}, \"results\": [{{\"seed\": \"seed-1\", \"name\": \"row one\", \
+         \"defect_class\": \"style\", \"result\": \"caught\", \"planted_files\": [\"src/a.rs\"]}}]}}"
+    ))
+    .expect("the normalized document parses")
 }
 
 fn normalized_carrying(counts: &str, result: &str, planted_files: &str) -> JsonValue {
@@ -85,6 +95,13 @@ fn test_the_counts_cover_sentence_stands_at_both_readings() {
     );
     let error = refused(validate_normalized_canary(&document));
     assert_sentence(&error, NORM_COVER_SENTENCE);
+    let performance = performance_carrying(
+        "{\"caught\": 0, \"waved-through\": 0, \"not-applicable\": 0, \"gate-broken\": 0, \"extra\": 0}",
+        "\"caught\"",
+        "[\"src/a.rs\"]",
+    );
+    let error = refused(validate_canary_performance(&performance));
+    assert_sentence(&error, PERF_COVER_SENTENCE);
 }
 
 #[test]
@@ -124,6 +141,10 @@ fn test_the_cover_test_stands_ahead_of_the_nonnegative_test_in_both_readings_and
     let document = normalized_carrying(counts, "\"caught\"", "\"src/a.rs\"");
     let error = refused(validate_normalized_canary(&document));
     assert_sentence(&error, NORM_PLANTED_SENTENCE);
+    let counts = "{\"caught\": 0, \"waved-through\": 0, \"not-applicable\": 0}";
+    let document = normalized_with_gate("\"\"", counts);
+    let error = refused(validate_normalized_canary(&document));
+    assert_sentence(&error, NORM_GATE_SENTENCE);
 }
 
 #[test]
@@ -143,6 +164,13 @@ fn test_counts_standing_as_a_bare_text_and_a_count_standing_as_a_decimal_meet_th
     let document = normalized_carrying(counts, "\"caught\"", "[\"src/a.rs\"]");
     let error = refused(validate_normalized_canary(&document));
     assert_sentence(&error, NORM_NONNEGATIVE_SENTENCE);
+    let document = normalized_carrying(
+        "{\"caught\": 0, \"waved-through\": 0, \"not-applicable\": 0, \"gate-broken\": 0, \"extra\": 0}",
+        "\"caught\"",
+        "[\"src/a.rs\"]",
+    );
+    let error = refused(validate_normalized_canary(&document));
+    assert_sentence(&error, NORM_COVER_SENTENCE);
 }
 
 #[test]
