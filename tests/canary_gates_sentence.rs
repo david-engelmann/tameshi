@@ -76,6 +76,9 @@ fn test_the_gates_sentence_stands_at_the_list_branch_over_an_empty_list_and_a_me
     let document = document_carrying("[null]", "[]");
     let error = refused(validate_canary_document(&document));
     assert_sentence(&error, GATES_SENTENCE);
+    let document = document_carrying("[\"style\", true]", "[]");
+    let error = refused(validate_canary_document(&document));
+    assert_sentence(&error, GATES_SENTENCE);
 }
 
 #[test]
@@ -101,6 +104,9 @@ fn test_the_gates_sentence_stands_at_the_non_list_branch_over_a_bare_text_and_an
     let error = refused(validate_canary_document(&document));
     assert_sentence(&error, GATES_SENTENCE);
     let document = document_carrying("null", "[]");
+    let error = refused(validate_canary_document(&document));
+    assert_sentence(&error, GATES_SENTENCE);
+    let document = document_carrying("true", "[]");
     let error = refused(validate_canary_document(&document));
     assert_sentence(&error, GATES_SENTENCE);
 }
@@ -132,6 +138,26 @@ fn test_a_gate_name_carrying_a_newline_meets_the_newline_sentence_behind_the_gat
     );
     let error = refused(validate_canary_document(&document));
     assert_sentence(&error, NEWLINE_SENTENCE);
+    let document = document_carrying("[\"a\\nb\", \"a\\nb\"]", "[]");
+    let error = refused(validate_canary_document(&document));
+    assert_sentence(&error, GATES_SENTENCE);
+    let document = document_carrying("[\"a\\nb\"]", "\"rows\"");
+    let error = refused(validate_canary_document(&document));
+    assert_sentence(&error, NEWLINE_SENTENCE);
+    let document = document_carrying(
+        "[\"a\\nb\"]",
+        "[{\"seed\": \"seed-1\", \"name\": \"row one\", \"defect_class\": \"style\", \
+         \"gates\": {\"a\\nb\": \"vanished\"}}]",
+    );
+    let error = refused(validate_canary_document(&document));
+    assert_sentence(&error, NEWLINE_SENTENCE);
+    let document = document_carrying(
+        "[\"a\\rb\"]",
+        "[{\"seed\": \"seed-1\", \"name\": \"row one\", \"defect_class\": \"style\", \
+         \"gates\": {\"a\\rb\": \"caught\"}}]",
+    );
+    let error = refused(validate_canary_document(&document));
+    assert_sentence(&error, NEWLINE_SENTENCE);
     let rows = format!("[{}]", sound_row());
     let document = document_carrying("[\"style\"]", &rows);
     assert_read(validate_canary_document(&document), "a sound document");
@@ -148,6 +174,15 @@ fn test_gate_names_stand_as_written_untrimmed_and_a_row_keyed_by_the_trimmed_nam
     assert_read(
         validate_canary_document(&document),
         "a document whose gates stand untrimmed",
+    );
+    let document = document_carrying(
+        "[\"Style\", \"style\"]",
+        "[{\"seed\": \"seed-1\", \"name\": \"row one\", \"defect_class\": \"style\", \
+         \"gates\": {\"Style\": \"caught\", \"style\": \"caught\"}}]",
+    );
+    assert_read(
+        validate_canary_document(&document),
+        "a document whose gates part by case alone",
     );
     let document = document_carrying(
         "[\" style\"]",
