@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use tameshi in research or engineering benchmarks, please cite this repository."
+title: "tameshi"
+abstract: "Evidence pack and floor-gated lifecycle ruling tool for CI checks"
+authors:
+  - family-names: "Engelmann"
+    given-names: "David"
+version: "0.34.0"
+date-released: "2026-11-27"
+license: "MIT"
+repository-code: "https://github.com/david-engelmann/tameshi"
+url: "https://david-engelmann.github.io/tameshi/"
