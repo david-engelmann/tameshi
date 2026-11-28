@@ -346,8 +346,8 @@ fn parse_time_components(chars: &[char], forgiving: bool) -> Option<(i64, i64, i
         // reading the text at all.
         let mut value: i64 = 0;
         let mut places = 0;
-        for index in 6..run.min(12) {
-            value = value * 10 + (chars[index] as u32 - '0' as u32) as i64;
+        for ch in chars.iter().take(run.min(12)).skip(6) {
+            value = value * 10 + (*ch as u32 - '0' as u32) as i64;
             places += 1;
         }
         while places < 6 {

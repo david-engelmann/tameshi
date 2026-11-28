@@ -1,24 +1,18 @@
-//! The tameshi command line over the Rust library.
+//! The `tameshi` command line over the Rust evidence pack library.
 //!
-//! This shell is the closing slice of the port under obligations
-//! PORT3-1 to PORT3-3. It carries the three doors of the Python
-//! command line, assemble and rule and validate, and the
-//! validate-ruling door slice 4 adds, with the argument
-//! reading the contract probe recorded. A reading the argument
-//! reader refuses exits with code 2 and the short usage line of the
-//! door on standard error, and a refusal of the reader or the
-//! library exits with code 1 and the refusal wording on standard
-//! error, and a door that succeeds exits with code 0 in silence.
-//! The arguments stand as the operating system hands them over,
-//! their bytes whole, so a file name carrying a byte that is not
-//! UTF-8 names the file it names, and a word carrying such a byte
-//! is refused in the wording the library gives that word, with the
-//! word rendered the way the Python renders it on standard error.
+//! This binary exposes the four subcommand doors `assemble`, `rule`,
+//! `validate`, and `validate-ruling`. Usage refusals exit with code
+//! 2 and print the short usage line of the answering door on standard
+//! error, input and floor refusals exit with code 1 and print the
+//! refusal wording on standard error, and clean runs exit with code 0
+//! in silence. Argument values stay in operating system string form
+//! end to end so path bytes reach the filesystem intact and
+//! non-UTF-8 ruling words render with exact byte escapes.
 
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::ffi::OsString;
 use std::io::Write;
-use std::os::unix::ffi::{OsStrExt, OsStringExt};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -163,8 +157,52 @@ const VALIDATE_RULING_FLAGS: &[FlagSpec] = &[
 /// system handed it over.
 type Values = HashMap<&'static str, OsString>;
 
-fn token_bytes(token: &OsString) -> &[u8] {
-    token.as_os_str().as_bytes()
+fn token_bytes(token: &OsString) -> Cow<'_, [u8]> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::ffi::OsStrExt;
+        Cow::Borrowed(token.as_os_str().as_bytes())
+    }
+    #[cfg(windows)]
+    {
+        use std::os::windows::ffi::OsStrExt;
+        Cow::Owned(
+            token
+                .as_os_str()
+                .encode_wide()
+                .map(|unit| if unit < 0x80 { unit as u8 } else { 0x80 })
+                .collect(),
+        )
+    }
+    #[cfg(not(any(unix, windows)))]
+    {
+        Cow::Owned(token.to_string_lossy().into_owned().into_bytes())
+    }
+}
+
+fn inline_os_value(token: &OsString, after_equal: &[u8]) -> OsString {
+    #[cfg(unix)]
+    {
+        use std::os::unix::ffi::OsStringExt;
+        let _ = token;
+        OsString::from_vec(after_equal.to_vec())
+    }
+    #[cfg(windows)]
+    {
+        use std::os::windows::ffi::{OsStrExt, OsStringExt};
+        let _ = after_equal;
+        let wide: Vec<u16> = token.as_os_str().encode_wide().collect();
+        let equal = wide
+            .iter()
+            .position(|unit| *unit == u16::from(b'='))
+            .expect("an inline value follows an equals sign");
+        OsString::from_wide(&wide[equal + 1..])
+    }
+    #[cfg(not(any(unix, windows)))]
+    {
+        let _ = token;
+        OsString::from(String::from_utf8_lossy(after_equal).into_owned())
+    }
 }
 
 /// The negative number shapes the Python argument reader does not
@@ -278,7 +316,8 @@ fn scan(specs: &[FlagSpec], args: &[OsString]) -> Scan {
     let mut position = 0;
     while position < args.len() {
         let token = &args[position];
-        let tok = token_bytes(token);
+        let tok_cow = token_bytes(token);
+        let tok: &[u8] = &tok_cow;
         if after_separator {
             refused_at_end = true;
             position += 1;
@@ -297,7 +336,7 @@ fn scan(specs: &[FlagSpec], args: &[OsString]) -> Scan {
             let (name, inline) = match long.iter().position(|byte| *byte == b'=') {
                 Some(equal) => (
                     &long[..equal],
-                    Some(OsString::from_vec(long[equal + 1..].to_vec())),
+                    Some(inline_os_value(token, &long[equal + 1..])),
                 ),
                 None => (long, None),
             };
@@ -321,7 +360,7 @@ fn scan(specs: &[FlagSpec], args: &[OsString]) -> Scan {
                             position += 1;
                         }
                         None => match args.get(position + 1) {
-                            Some(value) if !looks_like_option(token_bytes(value)) => {
+                            Some(value) if !looks_like_option(&token_bytes(value)) => {
                                 values.insert(spec.name, value.clone());
                                 position += 2;
                             }
@@ -388,6 +427,7 @@ fn word_text(value: &OsString) -> String {
 /// Decode the first character a byte string carries as UTF-8, or
 /// refuse the shape, the strict reading the Python gives a word it
 /// takes from its argument vector.
+#[cfg(not(windows))]
 fn decode_scalar(bytes: &[u8]) -> Option<(char, usize)> {
     let first = *bytes.first()?;
     if first < 0x80 {
@@ -420,6 +460,7 @@ fn decode_scalar(bytes: &[u8]) -> Option<(char, usize)> {
 /// error stream with each such escape spelled out as the escape
 /// text itself, so a byte renders here as the same spelled escape
 /// and every whole character renders as itself.
+#[cfg(not(windows))]
 fn escape_word(bytes: &[u8]) -> String {
     let mut rendered = String::new();
     let mut at = 0;
@@ -436,6 +477,27 @@ fn escape_word(bytes: &[u8]) -> String {
         }
     }
     rendered
+}
+
+fn escape_os_word(word: &OsString) -> String {
+    #[cfg(windows)]
+    {
+        use std::os::windows::ffi::OsStrExt;
+        let mut rendered = String::new();
+        for item in char::decode_utf16(word.as_os_str().encode_wide()) {
+            match item {
+                Ok(ch) => rendered.push(ch),
+                Err(surrogate) => {
+                    rendered.push_str(&format!("\\u{:04x}", surrogate.unpaired_surrogate()));
+                }
+            }
+        }
+        rendered
+    }
+    #[cfg(not(windows))]
+    {
+        escape_word(&token_bytes(word))
+    }
 }
 
 /// The refusal the library gives the kill word, standing in the
@@ -457,7 +519,7 @@ fn refuse_unreadable_ruling(pack: &JsonValue, ruling: &OsString) -> TameshiError
         Err(error) if error.message != KILL_REFUSAL => error,
         _ => TameshiError::refusal(format!(
             "an unknown ruling was requested ({})",
-            escape_word(token_bytes(ruling))
+            escape_os_word(ruling)
         )),
     }
 }
@@ -644,7 +706,8 @@ fn run(args: &[OsString]) -> u8 {
             Some(token) => token,
             None => return usage_refusal(TOP_USAGE),
         };
-        let tok = token_bytes(token);
+        let tok_cow = token_bytes(token);
+        let tok: &[u8] = &tok_cow;
         if let Some(answers) = is_top_help(tok) {
             if answers {
                 print_stdout(TOP_HELP);
@@ -705,7 +768,15 @@ fn run(args: &[OsString]) -> u8 {
     }
 }
 
+const WORKER_STACK_BYTES: usize = 64 * 1024 * 1024;
+
 fn main() -> ExitCode {
     let args: Vec<OsString> = std::env::args_os().skip(1).collect();
-    ExitCode::from(run(&args))
+    let code = std::thread::Builder::new()
+        .stack_size(WORKER_STACK_BYTES)
+        .spawn(move || run(&args))
+        .expect("the worker thread spawns")
+        .join()
+        .expect("the worker thread finishes");
+    ExitCode::from(code)
 }

@@ -224,7 +224,8 @@ fn pin_dir(name: &str) -> PathBuf {
 fn test_cli_battery_matches_the_python_record() {
     let cases = recordings();
     assert_eq!(cases.len(), 54, "the battery carries 54 cases");
-    let sections: Vec<(&str, usize)> = vec![
+    // Use a fixed array to satisfy `clippy::useless_vec` under `-D warnings`.
+    let sections: [(&str, usize); 4] = [
         ("behaviours", 9),
         ("arguments", 31),
         ("refusals", 12),
@@ -264,23 +265,53 @@ fn test_a_file_name_carrying_a_non_utf8_byte_is_read() {
     let mut bad_name = dir.as_os_str().as_bytes().to_vec();
     bad_name.extend_from_slice(b"/led\xffger.json");
     let bad_path = PathBuf::from(OsString::from_vec(bad_name));
-    std::fs::write(&bad_path, ledger.as_bytes()).expect("the ledger stands under its byte name");
     let packs_dir = dir.join("packs");
-    let output = Command::new(env!("CARGO_BIN_EXE_tameshi"))
-        .arg("assemble")
-        .arg("--catchledger")
-        .arg(bad_path.as_os_str())
-        .arg("--packs-dir")
-        .arg(&packs_dir)
-        .output()
-        .expect("the binary runs");
-    assert_eq!(
-        output.status.code(),
-        Some(0),
-        "a ledger named with a raw byte assembles"
-    );
-    assert!(packs_dir.join("001-style-checks.json").exists());
-    assert!(packs_dir.join("002-unit-checks.json").exists());
+    match std::fs::write(&bad_path, ledger.as_bytes()) {
+        Ok(()) => {
+            let output = Command::new(env!("CARGO_BIN_EXE_tameshi"))
+                .arg("assemble")
+                .arg("--catchledger")
+                .arg(bad_path.as_os_str())
+                .arg("--packs-dir")
+                .arg(&packs_dir)
+                .output()
+                .expect("the binary runs");
+            assert_eq!(
+                output.status.code(),
+                Some(0),
+                "a ledger named with a raw byte assembles"
+            );
+            assert!(packs_dir.join("001-style-checks.json").exists());
+            assert!(packs_dir.join("002-unit-checks.json").exists());
+        }
+        // macOS APFS (`EILSEQ` 92) and Seatbelt (`EPERM` 1) refuse non-UTF-8 directory entries;
+        // stage a `U+FFFD` sibling decoy to prove raw `0xff` bytes reach the OS unmodified.
+        Err(err)
+            if cfg!(target_os = "macos") && matches!(err.raw_os_error(), Some(92) | Some(1)) =>
+        {
+            std::fs::write(dir.join("led\u{FFFD}ger.json"), ledger.as_bytes())
+                .expect("the replacement-character decoy stands");
+            let output = Command::new(env!("CARGO_BIN_EXE_tameshi"))
+                .arg("assemble")
+                .arg("--catchledger")
+                .arg(bad_path.as_os_str())
+                .arg("--packs-dir")
+                .arg(&packs_dir)
+                .output()
+                .expect("the binary runs");
+            assert_eq!(
+                output.status.code(),
+                Some(1),
+                "raw non-UTF-8 bytes reach the OS without replacement-character fallback"
+            );
+            assert_eq!(
+                output.stderr,
+                b"the catchledger evidence could not be read\n"
+            );
+            assert!(!packs_dir.exists());
+        }
+        Err(err) => panic!("the ledger stands under its byte name: {err}"),
+    }
 
     let pack = recorded_input("deterministic ruling outputs", "pack.json");
     let pack_path = dir.join("pack.json");

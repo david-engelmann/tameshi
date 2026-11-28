@@ -136,7 +136,8 @@ fn test_a_canaryfield_document_in_the_emitted_shape_is_read() {
 #[test]
 fn test_an_emitted_shape_document_tallies_from_its_rows_and_not_its_summary() {
     let dir = scratch("summary");
-    let rows = vec![
+    // Use a fixed array to satisfy `clippy::useless_vec` under `-D warnings`.
+    let rows = [
         emitted_row(0, "caught"),
         emitted_row(1, "waved-through"),
         emitted_row(2, "not-applicable"),

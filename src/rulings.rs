@@ -417,9 +417,7 @@ pub fn render_body(pack: &JsonValue, record: &JsonValue) -> String {
 }
 
 fn calendar_date(value: &JsonValue, label: &str) -> Result<i64> {
-    let parsed = value
-        .as_text()
-        .and_then(|text| dates::parse_calendar_date(text));
+    let parsed = value.as_text().and_then(dates::parse_calendar_date);
     match parsed {
         Some(day) => Ok(day),
         None => Err(TameshiError::refusal(format!(
