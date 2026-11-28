@@ -126,7 +126,7 @@ jobs:
           for ruling in examples/ruling-*.json; do
             slug="${ruling#examples/ruling-}"
             slug="${slug%.json}"
-            pack="$(ls examples/packs/*-"${slug}".json)"
+            pack="$(ls examples/packs/[0-9][0-9][0-9]-"${slug}".json)"
             body="examples/ruling-${slug}.md"
             tameshi validate-ruling --pack "$pack" --ruling "$ruling" --body "$body"
           done
