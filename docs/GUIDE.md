@@ -27,6 +27,20 @@ export PATH="$HOME/.local/bin:$PATH"
 cargo binstall --git https://github.com/david-engelmann/tameshi tameshi
 ```
 
+### Shell Completions, Manpage, and Container
+
+Install shell completions and the Unix manual page from a checkout, or run the reproducible non-root container image on Linux, macOS, or Windows (WSL2 and Docker Desktop).
+
+```sh
+# Shell completions (bash, zsh, fish) and Unix manpage
+source completions/tameshi.bash
+man ./man/tameshi.1
+
+# Reproducible non-root container
+docker build -t tameshi .
+docker run --rm -v "$PWD:/work:ro" tameshi --help
+```
+
 ## All Four CLI Doors
 
 ```text

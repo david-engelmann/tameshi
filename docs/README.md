@@ -14,6 +14,8 @@ Tameshi judges checks by assembling `catchledger` scorecards, `canaryfield` plan
 - [Operator Guide](GUIDE.md) Step-by-step installation from GitHub, all four CLI doors, floor accounting, human sign-off workflow, and GitHub Actions verification.
 - [Architecture](ARCHITECTURE.md) Multi-source pack assembly, 30-defect and 14-day floor evaluation, unsigned ruling invariants, parser bounds, and Gate Truth suite boundaries.
 - [Wire Formats](FORMATS.md) Deterministic JSON and Markdown schemas across `tameshi-pack/1`, `tameshi-pack/2`, `tameshi-decision/1`, and `tameshi-ruling/1`.
+- [Performance](PERFORMANCE.md) Measured synthetic throughput, latency charts, and reproducible `scripts/bench.py` harness.
+- [Rust API Reference](https://david-engelmann.github.io/tameshi/api/tameshi/index.html) Generated crate documentation for library callers.
 - [Comparison](COMPARISON.md) Technical comparison against static branch-protection policies, ad-hoc check deletion, PR verdict tools (`verdictloop`), and sibling Gate Truth tools.
 - [FAQ](FAQ.md) Direct answers to common installation, floor-shortfall, human-signature, and `kill` ruling questions.
 - [Changelog](../CHANGELOG.md) Release milestone summaries.

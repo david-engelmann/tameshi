@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 406" width="900" height="406" role="img" aria-label="tameshi Multi-Check Pack Assembly &amp; Ruling Latency">
+  <rect width="900" height="406" rx="14" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+  <text x="32" y="42" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="19" font-weight="700" fill="#f8fafc">tameshi Multi-Check Pack Assembly &amp; Ruling Latency</text>
+  <text x="32" y="66" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12.5" fill="#94a3b8">Median of 5 runs on arm64-darwin (rustc 1.99.1 (58cf8f9c3 2026-10-13) (Homebrew), --release, 0 external crates)</text>
+  <rect x="610" y="28" width="12" height="12" rx="3" fill="#f59e0b"/>
+  <text x="628" y="39" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#f8fafc">assemble</text>
+  <rect x="750" y="28" width="12" height="12" rx="3" fill="#22c55e"/>
+  <text x="768" y="39" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#f8fafc">rule</text>
+  <rect x="24" y="96" width="852" height="76" rx="10" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <text x="40" y="139" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" font-weight="600" fill="#f8fafc">10 checks / 40 seeds</text>
+  <rect x="270" y="110" width="500" height="20" rx="5" fill="#0b1120"/>
+  <rect x="270" y="110" width="6.0" height="20" rx="5" fill="#f59e0b"/>
+  <text x="286.0" y="125" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#f8fafc">23.55 ms</text>
+  <rect x="270" y="138" width="500" height="20" rx="5" fill="#0b1120"/>
+  <rect x="270" y="138" width="6.0" height="20" rx="5" fill="#22c55e"/>
+  <text x="286.0" y="153" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#f8fafc">11.10 ms</text>
+  <rect x="24" y="188" width="852" height="76" rx="10" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <text x="40" y="231" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" font-weight="600" fill="#f8fafc">50 checks / 100 seeds</text>
+  <rect x="270" y="202" width="500" height="20" rx="5" fill="#0b1120"/>
+  <rect x="270" y="202" width="10.5" height="20" rx="5" fill="#f59e0b"/>
+  <text x="290.5" y="217" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#f8fafc">169.26 ms</text>
+  <rect x="270" y="230" width="500" height="20" rx="5" fill="#0b1120"/>
+  <rect x="270" y="230" width="6.0" height="20" rx="5" fill="#22c55e"/>
+  <text x="286.0" y="245" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#f8fafc">18.67 ms</text>
+  <rect x="24" y="280" width="852" height="76" rx="10" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <text x="40" y="323" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" font-weight="600" fill="#f8fafc">200 checks / 200 seeds</text>
+  <rect x="270" y="294" width="500" height="20" rx="5" fill="#0b1120"/>
+  <rect x="270" y="294" width="434.8" height="20" rx="5" fill="#f59e0b"/>
+  <text x="714.8" y="309" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#f8fafc">6991.60 ms</text>
+  <rect x="270" y="322" width="500" height="20" rx="5" fill="#0b1120"/>
+  <rect x="270" y="322" width="6.0" height="20" rx="5" fill="#22c55e"/>
+  <text x="286.0" y="337" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="600" fill="#f8fafc">22.48 ms</text>
+</svg>

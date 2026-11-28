@@ -13,6 +13,8 @@
   <a href="https://github.com/david-engelmann/tameshi/tree/main/examples">Examples</a> |
   <a href="https://github.com/david-engelmann/tameshi/blob/main/docs/ARCHITECTURE.md">Architecture</a> |
   <a href="https://github.com/david-engelmann/tameshi/blob/main/docs/FORMATS.md">Wire Formats</a> |
+  <a href="https://github.com/david-engelmann/tameshi/blob/main/docs/PERFORMANCE.md">Performance</a> |
+  <a href="https://david-engelmann.github.io/tameshi/api/tameshi/index.html">Rust API</a> |
   <a href="https://github.com/david-engelmann/tameshi/blob/main/docs/COMPARISON.md">Comparison</a> |
   <a href="https://github.com/david-engelmann/tameshi/blob/main/docs/FAQ.md">FAQ</a> |
   <a href="https://github.com/david-engelmann/tameshi/releases">Releases</a>

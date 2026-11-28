@@ -1,0 +1,30 @@
+#compdef tameshi
+
+_tameshi() {
+    local -a subcommands
+    subcommands=(
+        'assemble:join evidence inputs into per-check packs'
+        'rule:generate an unsigned ruling and PR body'
+        'validate:verify a pack against upstream evidence'
+        'validate-ruling:verify a ruling and body against its pack'
+    )
+    if (( CURRENT == 2 )); then
+        _describe -t subcommands 'tameshi subcommand' subcommands
+        return 0
+    fi
+    _arguments -s \
+        '--catchledger=[catchledger ledger or pack JSON]:file:_files' \
+        '--canaryfield=[canaryfield results JSON]:file:_files' \
+        '--blindgate=[blindgate evidence JSON]:file:_files' \
+        '--decision=[tameshi-decision JSON]:file:_files' \
+        '--packs-dir=[output packs directory]:directory:_files -/' \
+        '--pack=[assembled tameshi pack JSON]:file:_files' \
+        '--ruling=[ruling word]:ruling:(keep demote quarantine kill)' \
+        '--expires=[quarantine expiry date YYYY-MM-DD]:date:' \
+        '--today=[override current date YYYY-MM-DD]:date:' \
+        '--out=[output directory for ruling files]:directory:_files -/' \
+        '--body=[Markdown ruling body path]:file:_files' \
+        '(-h --help)'{-h,--help}'[print usage]'
+}
+
+_tameshi "$@"
