@@ -29,14 +29,16 @@ cargo binstall --git https://github.com/david-engelmann/tameshi tameshi
 
 ### Shell Completions, Manpage, and Container
 
-Install shell completions and the Unix manual page from a checkout, or run the reproducible non-root container image on Linux, macOS, or Windows (WSL2 and Docker Desktop).
+Install shell completions and the Unix manual page from a checkout, or run the multi-stage non-root container image on Linux, macOS, or Windows (WSL2 and Docker Desktop).
 
 ```sh
 # Shell completions (bash, zsh, fish) and Unix manpage
 source completions/tameshi.bash
-man ./man/tameshi.1
+cp completions/_tameshi "${fpath[1]}/_tameshi"  # zsh
+cp completions/tameshi.fish ~/.config/fish/completions/  # fish
+install -d ~/.local/share/man/man1 && install -m 0644 man/tameshi.1 ~/.local/share/man/man1/
 
-# Reproducible non-root container
+# Multi-stage non-root container
 docker build -t tameshi .
 docker run --rm -v "$PWD:/work:ro" tameshi --help
 ```
