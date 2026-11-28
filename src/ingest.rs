@@ -230,10 +230,10 @@ pub fn tally_canary_results(results: &[JsonValue]) -> JsonValue {
         .collect();
     for row in results {
         if let Some(word) = row.get("result").and_then(|value| value.as_text()) {
-            if let Some((_, count)) = counts.iter_mut().find(|(name, _)| name == word) {
-                if let JsonValue::Int(held) = count {
-                    *held += 1;
-                }
+            if let Some((_, JsonValue::Int(held))) =
+                counts.iter_mut().find(|(name, _)| name == word)
+            {
+                *held += 1;
             }
         }
     }
@@ -520,10 +520,10 @@ pub fn normalize_canary_document(document: &JsonValue, check: &str) -> Result<Op
             .cloned()
             .unwrap_or(JsonValue::Null);
         if let Some(word) = result.as_text() {
-            if let Some((_, count)) = counts.iter_mut().find(|(name, _)| name == word) {
-                if let JsonValue::Int(held) = count {
-                    *held += 1;
-                }
+            if let Some((_, JsonValue::Int(held))) =
+                counts.iter_mut().find(|(name, _)| name == word)
+            {
+                *held += 1;
             }
         }
         let planted_files = match row.get("planted_files") {
