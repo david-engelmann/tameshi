@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 420" width="920" height="420" role="img" aria-label="tameshi terminal run over synthetic examples">
+  <title>tameshi terminal showcase assembling evidence packs and generating unsigned rulings</title>
+  <rect width="920" height="420" rx="16" fill="#faf9f6" stroke="#d6d3cd" stroke-width="1.5"/>
+  <rect width="920" height="38" rx="16" fill="#efede8"/>
+  <rect y="22" width="920" height="16" fill="#efede8"/>
+  <circle cx="22" cy="19" r="6" fill="#ef4444"/>
+  <circle cx="42" cy="19" r="6" fill="#f59e0b"/>
+  <circle cx="62" cy="19" r="6" fill="#22c55e"/>
+  <text x="460" y="23" text-anchor="middle" fill="#57534e" font-family="'SFMono-Regular', ui-monospace, Menlo, Consolas, monospace" font-size="12" font-weight="600">tameshi assemble &amp;&amp; tameshi rule --pack out/packs/002-unit-checks.json ...</text>
+
+  <g font-family="'SFMono-Regular', ui-monospace, Menlo, Consolas, monospace" font-size="12.5">
+    <text x="24" y="66" fill="#7c3aed" font-weight="700">$</text>
+    <text x="40" y="66" fill="#1c1917">tameshi assemble --catchledger examples/synthetic-catchledger-ledger.json \</text>
+    <text x="54" y="85" fill="#1c1917">--canaryfield examples/synthetic-canaryfield-results.json \</text>
+    <text x="54" y="104" fill="#1c1917">--blindgate examples/synthetic-blindgate-evidence.json --packs-dir out/packs</text>
+
+    <text x="24" y="132" fill="#7c3aed" font-weight="700">$</text>
+    <text x="40" y="132" fill="#1c1917">tameshi rule --pack out/packs/001-style-checks.json --ruling quarantine --expires 2027-03-01 --out out/rulings</text>
+    <text x="24" y="153" fill="#b91c1c">refused below floor  (style checks holds 0 canaryfield defects vs 30 required)</text>
+
+    <text x="24" y="182" fill="#7c3aed" font-weight="700">$</text>
+    <text x="40" y="182" fill="#1c1917">tameshi rule --pack out/packs/002-unit-checks.json --ruling quarantine \</text>
+    <text x="54" y="201" fill="#1c1917">--expires 2027-03-01 --today 2027-01-30 --out out/rulings &amp;&amp; head -n 14 out/rulings/ruling-unit-checks.md</text>
+
+    <text x="24" y="232" fill="#6d28d9" font-weight="700"># Ruling for unit checks</text>
+    <text x="24" y="254" fill="#92400e">This ruling is unsigned. A human signs it outside the tool before the pull request is submitted.</text>
+
+    <text x="24" y="282" fill="#1d4ed8" font-weight="700">Evidence                   Value</text>
+    <text x="24" y="303" fill="#1c1917">Repository                 synthetic-repo</text>
+    <text x="24" y="322" fill="#1c1917">Check / Ruling / Expiry    unit checks  |  quarantine (quarantined)  |  2027-03-01</text>
+    <text x="24" y="341" fill="#1c1917">Catchledger scorecard      40 fires, 6 blocks, 3 catches, 1 false block, USD 0.04 / catch</text>
+    <text x="24" y="360" fill="#15803d">Floor legs satisfied       30 / 30 canaryfield defects  |  14 / 14 catchledger CI days</text>
+    <text x="24" y="388" fill="#6d28d9" font-weight="700">Validated via tameshi validate-ruling --pack ... --ruling ruling-unit-checks.json --body ruling-unit-checks.md</text>
+  </g>
+</svg>

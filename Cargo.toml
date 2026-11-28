@@ -1,9 +1,34 @@
 [package]
 name = "tameshi"
-version = "0.1.0"
+version = "0.34.0"
 edition = "2021"
+rust-version = "1.61"
 description = "The evidence pack tool for checks, assembling evidence packs and issuing rulings as pull requests"
 license = "MIT"
+readme = "README.md"
+repository = "https://github.com/david-engelmann/tameshi"
+homepage = "https://david-engelmann.github.io/tameshi/"
+documentation = "https://david-engelmann.github.io/tameshi/"
+keywords = ["ci", "testing", "governance", "quarantine", "verification"]
+categories = ["command-line-utilities", "development-tools"]
+exclude = [
+    "tests/**",
+    "book/**",
+    "docs/media/**",
+    "CONTRACT.md",
+    "AGENTS.md",
+    "CITATION.cff",
+    ".editorconfig",
+    ".gitattributes",
+    ".github/**",
+    "deny.toml",
+    "install.sh",
+    "Dockerfile",
+    ".dockerignore",
+    "man/**",
+    "completions/**",
+    "scripts/**",
+]
 
 [lib]
 name = "tameshi"
@@ -12,3 +37,8 @@ path = "src/lib.rs"
 [[bin]]
 name = "tameshi"
 path = "src/main.rs"
+
+[package.metadata.binstall]
+pkg-url = "{ repo }/releases/download/v{ version }/{ name }-v{ version }-{ target }.tar.gz"
+bin-dir = "{ bin }{ binary-ext }"
+pkg-fmt = "tgz"

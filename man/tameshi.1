@@ -1,0 +1,103 @@
+.TH TAMESHI 1 "2026-11-28" "tameshi 0.34.0" "User Commands"
+.SH NAME
+tameshi \- evidence-floor lifecycle governance and ruling generator for CI
+checks
+.SH SYNOPSIS
+.B tameshi assemble
+.B \-\-catchledger
+.I PATH
+.RB [ \-\-canaryfield
+.IR PATH ]
+.RB [ \-\-blindgate
+.IR PATH ]
+.RB [ \-\-decision
+.IR PATH ]
+.B \-\-packs\-dir
+.I DIR
+.br
+.B tameshi rule
+.B \-\-pack
+.I PATH
+.B \-\-ruling
+.I WORD
+.RB [ \-\-expires
+.IR YYYY\-MM\-DD ]
+.RB [ \-\-today
+.IR YYYY\-MM\-DD ]
+.B \-\-out
+.I DIR
+.br
+.B tameshi validate
+.B \-\-pack
+.I PATH
+.B \-\-catchledger
+.I PATH
+.RI [ OPTIONS ]
+.br
+.B tameshi validate\-ruling
+.B \-\-pack
+.I PATH
+.B \-\-ruling
+.I PATH
+.RB [ \-\-body
+.IR PATH ]
+.SH DESCRIPTION
+.B tameshi
+assembles per-check evidence packs
+.RB ( tameshi\-pack/1
+and
+.BR tameshi\-pack/2 )
+from local
+.BR catchledger ,
+.BR canaryfield ,
+and
+.B blindgate
+outputs, enforces the mandatory two-leg evidence floor of at least 30 scored
+planted defects and at least 14 UTC calendar days of CI history, and emits
+unsigned
+.B tameshi\-ruling/1
+JSON records and Markdown pull-request receipts for human sign-off without
+deleting files on disk.
+.SH COMMANDS
+.TP
+.B assemble
+Join evidence inputs into numbered per-check JSON packs inside
+.BR \-\-packs\-dir .
+.TP
+.B rule
+Emit an unsigned ruling record and Markdown PR receipt for
+.I WORD
+.RB ( keep ,
+.BR demote ,
+.BR quarantine ,
+or model-backed
+.BR kill ),
+refusing any pack below the evidence floor.
+.TP
+.B validate
+Verify an assembled pack against its upstream evidence documents.
+.TP
+.B validate\-ruling
+Verify a ruling JSON record and optional Markdown body against its evidence
+pack.
+.SH EXIT STATUS
+.TP
+.B 0
+Command or validation succeeded.
+.TP
+.B 1
+Domain refusal, floor shortfall, malformed JSON, or validation disagreement.
+.TP
+.B 2
+CLI flag usage error.
+.SH EXAMPLES
+.nf
+tameshi assemble --catchledger examples/synthetic-catchledger-ledger.json \
+  --canaryfield examples/synthetic-canaryfield-results.json --packs-dir /tmp/packs
+tameshi rule --pack /tmp/packs/002-unit-checks.json --ruling quarantine \
+  --expires 2027-03-01 --today 2027-01-30 --out /tmp/rulings
+.fi
+.SH SEE ALSO
+https://david-engelmann.github.io/tameshi/
+.SH AUTHORS
+David Engelmann

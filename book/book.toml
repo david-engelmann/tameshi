@@ -1,0 +1,16 @@
+[book]
+title = "tameshi Documentation"
+authors = ["David Engelmann"]
+description = "The evidence pack tool for checks, assembling evidence packs and issuing rulings as pull requests"
+language = "en"
+src = "src"
+
+[build]
+build-dir = "build"
+create-missing = false
+
+[output.html]
+default-theme = "coal"
+preferred-dark-theme = "ayu"
+site-url = "/tameshi/"
+git-repository-url = "https://github.com/david-engelmann/tameshi"
