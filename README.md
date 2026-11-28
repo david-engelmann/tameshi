@@ -49,7 +49,7 @@ Checks have no lifecycle in mainstream tooling. A check is required or it is abs
 
 ## Install
 
-Install directly from this GitHub repository with Cargo (Rust `1.61` or newer on Linux and macOS) or via `install.sh` and `cargo-binstall --git` once prebuilt release archives are attached (`v0.34.0` and `v0.35.0` onward). Do **not** run bare `cargo install tameshi` from `crates.io`, because the `tameshi` name on `crates.io` belongs to an unrelated third-party library.
+Install directly from this GitHub repository with Cargo (Rust `1.61` or newer on Linux and macOS), install checksum-verified prebuilt archives via `install.sh`, or download prebuilt archives via `cargo-binstall --git` once prebuilt release archives are attached (`v0.34.0` and `v0.35.0` onward). Do **not** run bare `cargo install tameshi` from `crates.io`, because the `tameshi` name on `crates.io` belongs to an unrelated third-party library.
 
 ```sh
 cargo install --git https://github.com/david-engelmann/tameshi --locked

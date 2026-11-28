@@ -16,7 +16,7 @@ cargo install --git https://github.com/david-engelmann/tameshi --locked
 
 ### Prebuilt Release Archives
 
-On Linux and macOS (`x86_64` and `aarch64`), install verified prebuilt archives via `install.sh` or `cargo-binstall --git` once release assets are attached (`v0.34.0` and `v0.35.0` onward).
+On Linux and macOS (`x86_64` and `aarch64`), install checksum-verified prebuilt archives via `install.sh` or download prebuilt archives via `cargo-binstall --git` once release assets are attached (`v0.34.0` and `v0.35.0` onward).
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/david-engelmann/tameshi/main/install.sh | sh
@@ -85,22 +85,24 @@ This writes two files inside `--out`
 
 Tameshi never signs rulings automatically. After reviewing the receipts, a human operator updates the nested `signature` object in `ruling-<slug>.json` outside the tool so `"status"` becomes `"signed"` and both `"signed_by"` and `"signed_at"` hold non-empty strings, then opens the ruling pull request.
 
-Important validation note. `tameshi validate-ruling --body PATH` compares the Markdown file byte for byte against the canonical body rendered from the pack and ruling record, so leave `ruling-<slug>.md` unedited if passing `--body` in CI, and record human sign-off inside `ruling-<slug>.json`'s `signature` block (`status: "signed"` with non-empty `signed_by` and `signed_at`).
+Important validation note. `tameshi validate-ruling --body PATH` compares the Markdown file byte for byte against the canonical body rendered from the pack and ruling record, so leave `ruling-<slug>.md` unedited if passing `--body` in CI, and record human sign-off inside `ruling-<slug>.json`'s `signature` block (`status` set to `"signed"` with non-empty `signed_by` and `signed_at`). Both the generated outputs in `/tmp/tm-demo` and the committed reference files under `examples/` can be validated directly.
 
 ```sh
 tameshi validate \
-  --pack examples/packs/002-unit-checks.json \
+  --pack /tmp/tm-demo/packs/002-unit-checks.json \
   --catchledger examples/synthetic-catchledger-ledger.json \
   --canaryfield examples/synthetic-canaryfield-results.json \
   --blindgate examples/synthetic-blindgate-evidence.json
 
 tameshi validate-ruling \
-  --pack examples/packs/002-unit-checks.json \
-  --ruling examples/ruling-unit-checks.json \
-  --body examples/ruling-unit-checks.md
+  --pack /tmp/tm-demo/packs/002-unit-checks.json \
+  --ruling /tmp/tm-demo/rulings/ruling-unit-checks.json \
+  --body /tmp/tm-demo/rulings/ruling-unit-checks.md
 ```
 
 ## GitHub Actions Ruling Audit Workflow
+
+Verify every committed ruling JSON and Markdown body in `examples/` (or your repository's rulings directory) against its matching evidence pack on pull requests.
 
 ```yaml
 name: verify-check-rulings
@@ -118,10 +120,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install tameshi from GitHub
         run: cargo install --git https://github.com/david-engelmann/tameshi --locked
-      - name: Verify committed evidence packs and rulings
+      - name: Verify committed ruling records against their evidence packs
         run: |
-          tameshi validate-ruling \
-            --pack examples/packs/002-unit-checks.json \
-            --ruling examples/ruling-unit-checks.json \
-            --body examples/ruling-unit-checks.md
+          set -eu
+          for ruling in examples/ruling-*.json; do
+            slug="${ruling#examples/ruling-}"
+            slug="${slug%.json}"
+            pack="$(ls examples/packs/*-"${slug}".json)"
+            body="examples/ruling-${slug}.md"
+            tameshi validate-ruling --pack "$pack" --ruling "$ruling" --body "$body"
+          done
 ```
